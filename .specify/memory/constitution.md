@@ -1,50 +1,56 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+- Version change: 1.0.0 -> 1.1.0
+- List of modified principles: Added "Secret Decoupling"
+- Added sections: Principle VI
+- Removed sections: None
+- Templates requiring updates: specs/001-repo-weaver-mvp/plan.md (retroactive check)
+-->
+# Repo Weaver Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Declarative Desired State
+The YAML describes the state the repo should have. Running `rw` converges actual state to desired state. This is the primary interaction model.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Native Tool First
+Repo Weaver must not implement custom parsers for external ecosystems when a native tool can be used instead (e.g., `task`, `npm`, `go`, `cargo`, `terraform`, `kubectl`). It may only parse its own configs or JSON outputs from tools.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Composition and Reuse
+Support "apps from apps" by building blocks (modules) that can be combined to form more complex apps. Modules must be versionable and pin-able.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Idempotency & Determinism
+Repo Weaver must be able to run repeatedly and be idempotent. Most changes should be done via deterministic actions. AI-based changes are supported but must be controlled options.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Update Safety
+Updating a module or template should not require recreating a repo. It should update in place, safe for local customizations. Unmanaged files must not be changed unless explicitly targeted.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### VI. Secret Decoupling
+Configuration must never contain literal secrets. Secrets must be referenced by logical names in templates and resolved at runtime via providers (e.g., env vars, vaults). This ensures security and portability.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+## Scope & Constraints
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Repo Weaver manages scaffolding, folder structure, wrapper taskfiles, and config generation. It does NOT aim to become a full CI system, replace Terraform/Helm, or implement a full programming language.
+MVP constraints: Single static binary (Go/Rust), cross-platform, versioned configuration schema.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## AI Integration Policy
+
+AI patches must be controlled steps:
+1. Use an external AI CLI tool.
+2. Output a unified diff.
+3. Apply diff using git/patch.
+4. Run verify checks.
+5. Rollback on failure.
+This ensures AI actions are verifiable and safe.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This Constitution supersedes all other practices and documentation. Amendments require documentation, approval, and a migration plan.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### Governance Rules
+1. All modules and features must align with the "Native Tool First" principle.
+2. Breaking changes to the specific YAML schema require a version bump.
+3. All AI integration must adhere to the Verify/Rollback safety protocol.
+4. Versioning follows Semantic Versioning 2.0.0 (MAJOR.MINOR.PATCH).
+
+**Version**: 1.1.0 | **Ratified**: 2026-01-01 | **Last Amended**: 2026-01-02
