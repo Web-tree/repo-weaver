@@ -4,37 +4,34 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Initialize Cargo Workspace with `crates/cli`, `crates/core`, `crates/ops`
-- [ ] T002 [P] Create `crates/cli` skeleton and `main.rs`
-- [ ] T003 [P] Create `crates/core` lib skeleton
-- [ ] T004 [P] Create `crates/ops` lib skeleton
-- [ ] T005 [P] Setup `tracing` logging with JSON support and `Secret<T>` redaction wrapper in `crates/core`
-- [ ] T006 Setup integration test harness (assert_cmd) in `tests/integration/common.rs`
+- [x] T001 Initialize Cargo Workspace with `crates/cli`, `crates/core`, `crates/ops`
+- [x] T002 [P] Create `crates/cli` skeleton and `main.rs`
+- [x] T003 [P] Create `crates/core` lib skeleton
+- [x] T004 [P] Create `crates/ops` lib skeleton
+- [x] T005 [P] Setup `tracing` logging with JSON support and `Secret<T>` redaction wrapper in `crates/core`
+- [x] T006 Setup integration test harness (assert_cmd) in `tests/integration/common.rs`
 
 ## Phase 2: Foundational
 
-- [ ] T007 [P] Define Weaver configuration structs in `crates/core/src/config.rs`
-- [ ] T008 [P] Define State manifest structs in `crates/core/src/state.rs`
-- [ ] T009 [P] Setup Wasmtime host engine in `crates/core/src/plugin/wasm.rs`
-- [ ] T010 [P] Setup Tera template engine in `crates/core/src/template.rs`
-- [ ] T011 [P] Implement git operations (clone/checkout) in `crates/ops/src/git.rs`
-- [ ] T012 [P] Implement fs operations (ensure_dir, copy) in `crates/ops/src/fs.rs`
-
-## Phase 3: Bootstrap New Workspace (User Story 1 - P1)
-
-**Goal**: As a platform engineer, I can generate a fully working workspace from a module.
-**Independent Test**: `rw apply` generates all files from a fresh state without errors.
-
-- [ ] T013 [US1] Create integration test for bootstrap scenario in `tests/integration/apply.rs`
-- [ ] T014 [P] [US1] Implement `ensure.folder.exists` action logic in `crates/core/src/engine.rs`
-- [ ] T015 [P] [US1] Implement `ensure.file.from_template` action logic in `crates/core/src/engine.rs`
-- [ ] T016 [P] [US1] Implement `ensure.task.wrapper` action logic in `crates/core/src/engine.rs`
-- [ ] T017 [US1] Implement Module resolution (Global Cache `~/.rw/store`, Offline Fallback, Lockfile Integrity Check) in `crates/core/src/module.rs`
-- [ ] T018 [US1] Implement App instantiation and input validation in `crates/core/src/app.rs`
-- [ ] T019 [P] [US1] Implement `rw apply` command logic in `crates/cli/src/commands/apply.rs`
+- [x] T007 [P] Define Weaver configuration structs in `crates/core/src/config.rs`
+- [x] T008 [P] Define State manifest structs in `crates/core/src/state.rs`
+- [x] T009 [P] Setup Wasmtime host engine in `crates/core/src/plugin/wasm.rs`
+- [x] T010 [P] Setup Tera template engine in `crates/core/src/template.rs`
+- [x] T011 [P] Implement git operations (clone/checkout) in `crates/ops/src/git.rs`
+- [x] T012 [P] Implement fs operations (ensure_dir, copy) in `crates/ops/src/fs.rs`
+- [x] T013 [US1] Create integration test for bootstrap scenario in `tests/integration/apply.rs`
+- [x] T014 [P] [US1] Implement `ensure.folder.exists` action logic in `crates/core/src/engine.rs`
+- [x] T015 [P] [US1] Implement `ensure.file.from_template` action logic in `crates/core/src/engine.rs`
+- [x] T016 [P] [US1] Implement `ensure.task.wrapper` action logic in `crates/core/src/engine.rs`
+- [x] T017 [US1] Implement Module resolution (Global Cache `~/.rw/store`, Offline Fallback, Lockfile Integrity Check) in `crates/core/src/module.rs`
+- [x] T018 [US1] Implement App instantiation and input validation in `crates/core/src/app.rs`
+- [x] T019 [P] [US1] Implement `rw apply` command logic in `crates/cli/src/commands/apply.rs`
 - [ ] T020 [P] [US1] Implement CLI prompts for missing variables in `crates/cli/src/prompts.rs`
-- [ ] T021 [P] [US1] Implement AWS SSM Secret Provider (WASM) in `plugins/aws-ssm/`
-- [ ] T022 [US1] Implement Secret resolution with provider loading and Best-Effort Redaction in `crates/core/src/secret.rs`
+- [x] T021 [P] [US1] Implement AWS SSM Secret Provider via Host Exec (`aws` CLI) in `plugins/aws-ssm/`
+  - [x] Define `process.exec` WIT interface
+  - [x] Implement `process.exec` host logic in `crates/core`
+  - [x] Update `aws-ssm` plugin to use `process.exec`
+- [x] T022 [US1] Implement Secret resolution with provider loading and Best-Effort Redaction in `crates/core/src/secret.rs`
 
 ## Phase 4: Update and Converge (User Story 2 - P1)
 

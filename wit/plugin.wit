@@ -1,0 +1,39 @@
+package weaver:plugin;
+
+interface secrets {
+    record secret-request {
+        key: string,
+    }
+
+    variant secret-error {
+        access-denied(string),
+        not-found(string),
+        internal(string),
+    }
+
+    get-secret: func(req: secret-request) -> result<string, secret-error>;
+}
+
+interface process {
+    record exec-request {
+        program: string,
+        args: list<string>,
+        cwd: option<string>,
+        env: list<tuple<string, string>>,
+        inherit-env: bool,
+        stdin: option<list<u8>>,
+    }
+
+    record exec-result {
+        status: u32,
+        stdout: list<u8>,
+        stderr: list<u8>,
+    }
+
+    exec: func(req: exec-request) -> result<exec-result, string>;
+}
+
+world provider {
+    import process;
+    export secrets;
+}
