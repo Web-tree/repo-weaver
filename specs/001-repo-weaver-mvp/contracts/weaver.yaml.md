@@ -2,6 +2,33 @@
 
 **Version**: 1.0
 
+## Input Resolution & Precedence (CHK012)
+
+The system resolves input values for modules in the following order (highest to lowest):
+
+1.  **CLI Overrides**: Flags passed at runtime (e.g., `--set key=value`).
+2.  **Environment Variables**: Variables matching `RW_<APP>_<INPUT>`.
+3.  **App Configuration**: `inputs` stanza in `weaver.yaml`.
+4.  **Module Defaults**: `default` values defined in `weaver.module.yaml`.
+
+## Reserved Names (CHK011)
+
+To prevent collision with system internals, the following input names are **RESERVED** and validation will fail if used:
+
+- `rw_*` (Any prefix starting with rw_)
+- `module_path`
+- `workspace_root`
+- `output`
+
+## Input Validation (CHK009)
+
+- **Required**: If an input is marked `required: true` in the module and no value is resolved, the operation fails.
+- **Types**:
+  - `string`: standard text.
+  - `bool`: true/false (native yaml or "true"/"false" string).
+  - `number`: integers or floats.
+  - `list(string)`: arrays of strings.
+
 ## Schema
 
 ```yaml

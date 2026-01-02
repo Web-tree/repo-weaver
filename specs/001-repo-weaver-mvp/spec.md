@@ -62,7 +62,7 @@ As an operator, I want to run complex multi-step tasks (like "install") that cha
   - **Behavior**: When set, "AI Resolve" prompts MUST default to "Fail" (security safety) unless explicitly configured otherwise via flag (e.g., `--strategy=the-ours`).
   - **Missing Input**: If required variables are missing and no interactive prompt is possible, the system MUST fail with a clear error code (exit 1).
 - **FR-005**: System MUST implement `ensure.git.submodule` (or pinned clone) to vendor upstream dependencies.
-  - **Strategy**: Internal Vendoring. Clone to hidden cache (`.rw/cache`), then render/copy to workspace. No git submodules in user repo.
+  - **Strategy**: **Global Content-Addressable Cache**. Modules are stored in `~/.rw/store` (deduplicated by hash) and projected/linked into the workspace. This avoids efficient per-project duplication.
 - **FR-006**: System MUST implement `ensure.task.wrapper` to generate a `Taskfile.yml` including upstream targets.
 - **FR-007**: System MUST provide a CLI with `rw plan` to preview changes and `rw apply` to execute them.
 - **FR-008**: System MUST support persistent storage of user variables in `.rw/answers.yaml` to avoid repetitive prompting.
@@ -84,7 +84,16 @@ As an operator, I want to run complex multi-step tasks (like "install") that cha
   - **Contract**: Providers MUST implement this world to be loadable by the host.
 - **FR-014**: System MUST implement structured logging using `tracing` and support user-configurable verbosity.
   - **Flags**: Support `--verbose` (debug logs), `--quiet` (errors only), and `--json` (machine-readable structured logs).
+- **FR-015**: System MUST implement **Secret Safety** via Best Effort Redaction.
+  - **Type Safety**: Secrets MUST be wrapped in a `Secret<T>` type (or equivalent) that overrides `Display`/`Debug` implementations to print `***`.
+  - **Logging**: The generic logging layer MUST NOT output raw secret values.
 
+
+## Edge Cases & Error Handling
+
+- **EC-001**: **Offline/Unreachable Upstream**. If a dependency source is unreachable but the exact required version exists in the Global Cache, the system MUST automatically use the cached version and log a warning.
+- **EC-002**: **Lockfile Mismatch**. If downloaded content hash differs from `weaver.lock`, system MUST abort (Hard Failure).
+- **EC-003**: **AI Resolve Unavailable**. If "AI Resolve" strategy is configured or requested but the service is unavailable, the system MUST abort with an error (Strict Failure) and NOT fallback to manual prompts.
 
 ## Clarifications
 
@@ -132,6 +141,16 @@ As an operator, I want to run complex multi-step tasks (like "install") that cha
   - A: **CI/CD Friendly**. System MUST support `--yes` or `--non-interactive`. In this mode, prompts are disabled. Missing answers = Error. Drift detection = Error (unless auto-fix strategy is pre-configured).
 - Q: What are the logging standards?
   - A: **Tracing + JSON**. Use `tracing` crate. Support `--json` flag to emit NDJSON logs for machine parsing (e.g., by CI systems or IDEs).
+- Q: How should `weaver.lock` checksum mismatches be handled?
+  - A: **Hard Failure**. To prevent supply chain attacks, the system MUST abort immediately if the downloaded content hash differs from the lockfile. Explicit user action (e.g., `rw update`) is required to resolve.
+- Q: Where should downloaded modules be cached?
+  - A: **Global Shared Cache**. To optimize disk usage and performance, modules are stored in a global content-addressable store (e.g., `~/.rw/store`) rather than project-local folders.
+- Q: What happens if an upstream module is unreachable?
+  - A: **Auto-Fallback to Cache**. If the requested git reference (hash) exists in the global cache, the system MUST proceed using the cached copy with a warning, ensuring resilience during network outages.
+- Q: How should secrets be handled in logs?
+  - A: **Best Effort Redaction**. Secrets must be wrapped in a type that obscures their value (e.g., `***`) in logs and standard output. Strict zero-leakage guarantees are out of scope for MVP.
+- Q: What if "AI Resolve" is unavailable?
+  - A: **Strict Failure**. If AI resolution is explicitly configured (or selected) and the service is unreachable/unconfigured, the system MUST abort (exit code 1). It MUST NOT silently fall back to manual options or auto-skip.
 
 ### Key Entities
 
@@ -145,7 +164,7 @@ As an operator, I want to run complex multi-step tasks (like "install") that cha
 
 ### Measurable Outcomes
 
-- **SC-001**: A user can bootstrap a new `k3s-nebula` compatible workspace from zero to full config files in under 30 seconds (excluding git clone time).
+- **SC-001**: A user can bootstrap a new `k3s-nebula` compatible workspace from zero to full config files in under **30 seconds** (excluding git clone time) on standard developer hardware (e.g., Apple M1/M2/M3).
 - **SC-002**: The tool detects 100% of drift in managed files when running `rw plan` against a modified state.
 - **SC-003**: 100% of required variables not present in config triggers a user prompt.
 - **SC-004**: Pipeline steps successfully capture and verify JSON output from a mock command in integration tests.

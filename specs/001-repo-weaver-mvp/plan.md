@@ -19,7 +19,8 @@ Implement the MVP of `repo-weaver`, a declarative tool for scaffolding and manag
 
 **Language/Version**: Rust 1.92+
 **Primary Dependencies**: `clap` (CLI), `serde` (Auth/Config), `tera` (Templates), `copy_dir` (FS), `dialoguer` (Prompts), `wasmtime` (Plugins), `assert_cmd` (Testing)
-**Storage**: File System (Managed State), Git (Modules)
+**Storage**: File System (Managed State), Global Git Cache (`~/.rw/store`)
+
 **Testing**: `cargo test`, `assert_cmd` (Integration), `tempfile` (Isolation)
 **Target Platform**: CLI (mac/linux)
 **Project Type**: Modular Monolith (Cargo Workspace)
@@ -35,7 +36,14 @@ A "Module Repo" is the central source of truth for reusable building blocks.
 
 - **Role**: Contains `modules/` directories, each being a versionable unit.
 - **Content**: Terraform modules, Kubernetes YAMLs, Helm charts, Taskfiles, Bash scripts, and GitHub pipeline templates.
-- **Usage**: Referenced by `weaver.yaml` via Git URL and Ref (tag/commit). The core engine clones this repo (managed cache) to resolve dependencies.
+- **Usage**: Referenced by `weaver.yaml` via Git URL and Ref (tag/commit). The core engine clones this repo (managed global cache `~/.rw/store`) to resolve dependencies.
+
+### Reliability & Security
+
+- **Lockfile Integrity**: System MUST abort immediately (Hard Failure) if `weaver.lock` checksums do not match downloaded content.
+- **Offline Fallback**: System MUST auto-fallback to the global cache with a warning if the upstream source is unreachable.
+- **Secret Safety**: Secrets MUST be wrapped in a separate type that redacts values (`***`) in all logging outputs.
+- **AI Safety**: If "AI Resolve" is requested but unavailable, the system MUST fail strictly (exit 1) rather than falling back to unsafe defaults.
 
 
 ## Constitution Check

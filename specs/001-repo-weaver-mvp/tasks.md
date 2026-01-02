@@ -8,7 +8,7 @@
 - [ ] T002 [P] Create `crates/cli` skeleton and `main.rs`
 - [ ] T003 [P] Create `crates/core` lib skeleton
 - [ ] T004 [P] Create `crates/ops` lib skeleton
-- [ ] T005 [P] Setup `tracing` logging in `crates/cli/src/main.rs` and `crates/core/src/lib.rs`
+- [ ] T005 [P] Setup `tracing` logging with JSON support and `Secret<T>` redaction wrapper in `crates/core`
 - [ ] T006 Setup integration test harness (assert_cmd) in `tests/integration/common.rs`
 
 ## Phase 2: Foundational
@@ -29,12 +29,12 @@
 - [ ] T014 [P] [US1] Implement `ensure.folder.exists` action logic in `crates/core/src/engine.rs`
 - [ ] T015 [P] [US1] Implement `ensure.file.from_template` action logic in `crates/core/src/engine.rs`
 - [ ] T016 [P] [US1] Implement `ensure.task.wrapper` action logic in `crates/core/src/engine.rs`
-- [ ] T017 [US1] Implement Module resolution (git clone to cache) in `crates/core/src/module.rs`
+- [ ] T017 [US1] Implement Module resolution (Global Cache `~/.rw/store`, Offline Fallback, Lockfile Integrity Check) in `crates/core/src/module.rs`
 - [ ] T018 [US1] Implement App instantiation and input validation in `crates/core/src/app.rs`
 - [ ] T019 [P] [US1] Implement `rw apply` command logic in `crates/cli/src/commands/apply.rs`
 - [ ] T020 [P] [US1] Implement CLI prompts for missing variables in `crates/cli/src/prompts.rs`
 - [ ] T021 [P] [US1] Implement AWS SSM Secret Provider (WASM) in `plugins/aws-ssm/`
-- [ ] T022 [US1] Implement Secret resolution and provider loading in `crates/core/src/secret.rs`
+- [ ] T022 [US1] Implement Secret resolution with provider loading and Best-Effort Redaction in `crates/core/src/secret.rs`
 
 ## Phase 4: Update and Converge (User Story 2 - P1)
 
@@ -44,7 +44,7 @@
 - [ ] T023 [US2] Create integration test for update/drift scenarios in `tests/integration/update.rs`
 - [ ] T024 [P] [US2] Implement state calculation and validation in `crates/core/src/state.rs`
 - [ ] T025 [P] [US2] Implement drift detection logic in `crates/core/src/engine.rs`
-- [ ] T026 [US2] Update `rw apply` to handle drift prompts (Skip/Overwrite) in `crates/cli/src/commands/apply.rs`
+- [ ] T026 [US2] Update `rw apply` to handle drift prompts (Skip/Overwrite) and Strict Failure for AI unavailability in `crates/cli/src/commands/apply.rs`
 
 ## Phase 5: Operational Pipeline Execution (User Story 3 - P2)
 
