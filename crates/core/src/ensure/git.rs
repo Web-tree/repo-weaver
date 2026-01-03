@@ -16,6 +16,7 @@ impl Ensure for EnsureGitSubmodule {
                 "Ensure git submodule {} at {:?} is {}",
                 self.url, self.path, self.ref_
             ),
+            actions: vec![],
         })
     }
 
@@ -67,6 +68,7 @@ impl Ensure for EnsureGitClonePinned {
                 "Ensure git clone {} at {:?} pinned to {}",
                 self.url, self.path, self.ref_
             ),
+            actions: vec![],
         })
     }
 

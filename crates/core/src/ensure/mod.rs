@@ -2,7 +2,9 @@ use crate::config::EnsureConfig;
 use anyhow::Result;
 use std::path::PathBuf;
 
+pub mod ai;
 pub mod git;
+pub mod npm;
 
 use crate::state::State;
 
@@ -16,6 +18,7 @@ pub struct EnsureContext {
 #[derive(Debug)]
 pub struct EnsurePlan {
     pub description: String,
+    pub actions: Vec<String>,
 }
 
 pub trait Ensure: Send + Sync {
@@ -37,5 +40,16 @@ pub fn build_ensure(config: &EnsureConfig) -> Result<Box<dyn Ensure>> {
                 ref_: r#ref.clone(),
             }))
         }
+        EnsureConfig::NpmScript { name, command } => Ok(Box::new(npm::EnsureNpmScript {
+            name: name.clone(),
+            command: command.clone(),
+        })),
+        EnsureConfig::AiPatch {
+            prompt,
+            verify_command,
+        } => Ok(Box::new(ai::EnsureAiPatch {
+            prompt: prompt.clone(),
+            verify_command: verify_command.clone(),
+        })),
     }
 }

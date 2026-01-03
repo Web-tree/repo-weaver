@@ -35,7 +35,12 @@ enum Commands {
     Plan(plan::PlanArgs),
     Apply(apply::ApplyArgs),
     List(list::ListArgs),
-    Describe(describe::DescribeArgs),
+    /// Inspect an application's configuration
+    Describe(commands::describe::DescribeArgs),
+    /// Manage modules
+    Module(commands::module::ModuleArgs),
+    /// Run configured checks
+    Check(commands::check::CheckArgs),
     Run(crate::commands::run::RunArgs),
 }
 
@@ -75,6 +80,12 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Run(args)) => {
             crate::commands::run::run(args).await?;
+        }
+        Some(Commands::Module(args)) => {
+            commands::module::execute(args)?;
+        }
+        Some(Commands::Check(args)) => {
+            commands::check::execute(args)?;
         }
         None => {
             Cli::command().print_help()?;

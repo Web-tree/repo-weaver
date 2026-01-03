@@ -145,14 +145,14 @@
 
 ### Implementation for User Story 5
 
-- [ ] T050 [US5] Create `crates/cli/src/commands/module.rs` with clap subcommand nesting
-- [ ] T051 [US5] Implement `module list` subcommand with table output in `crates/cli/src/commands/module.rs`
-- [ ] T052 [US5] Implement `module list --json` output format in `crates/cli/src/commands/module.rs`
-- [ ] T053 [US5] Implement `module update <name> --ref <ref>` subcommand in `crates/cli/src/commands/module.rs`
-- [ ] T054 [US5] Implement weaver.yaml modification for ref update in `crates/cli/src/commands/module.rs`
-- [ ] T055 [US5] Implement module cache clearing (unless `--no-fetch`) in `crates/cli/src/commands/module.rs`
-- [ ] T056 [US5] Handle module not found error with available modules list in `crates/cli/src/commands/module.rs`
-- [ ] T057 [US5] Register `module` subcommand in `crates/cli/src/commands/mod.rs` and `main.rs`
+- [x] T050 [US5] Create `crates/cli/src/commands/module.rs` with clap subcommand nesting
+- [x] T051 [US5] Implement `module list` subcommand with table output in `crates/cli/src/commands/module.rs`
+- [x] T052 [US5] Implement `module list --json` output format in `crates/cli/src/commands/module.rs`
+- [x] T053 [US5] Implement `module update <name> --ref <ref>` subcommand in `crates/cli/src/commands/module.rs`
+- [x] T054 [US5] Implement weaver.yaml modification for ref update in `crates/cli/src/commands/module.rs`
+- [x] T055 [US5] Implement module cache clearing (unless `--no-fetch`) in `crates/cli/src/commands/module.rs`
+- [x] T056 [US5] Handle module not found error with available modules list in `crates/cli/src/commands/module.rs`
+- [x] T057 [US5] Register `module` subcommand in `crates/cli/src/commands/mod.rs` and `main.rs`
 
 **Checkpoint**: Module management via `rw module` fully functional
 
@@ -166,13 +166,13 @@
 
 ### Implementation for User Story 6
 
-- [ ] T058 [US6] Create `crates/cli/src/commands/check.rs` with clap subcommand structure
-- [ ] T059 [US6] Implement check command execution via shell in `crates/cli/src/commands/check.rs`
-- [ ] T060 [US6] Implement per-app filtering with `rw check <app>` in `crates/cli/src/commands/check.rs`
-- [ ] T061 [US6] Implement check result reporting (pass/fail per check) in `crates/cli/src/commands/check.rs`
-- [ ] T062 [US6] Handle "No checks defined" message gracefully in `crates/cli/src/commands/check.rs`
-- [ ] T063 [US6] Set non-zero exit code on check failure in `crates/cli/src/commands/check.rs`
-- [ ] T064 [US6] Register `check` subcommand in `crates/cli/src/commands/mod.rs` and `main.rs`
+- [x] T058 [US6] Create `crates/cli/src/commands/check.rs` with clap subcommand structure
+- [x] T059 [US6] Implement check command execution via shell in `crates/cli/src/commands/check.rs`
+- [x] T060 [US6] Implement per-app filtering with `rw check <app>` in `crates/cli/src/commands/check.rs`
+- [x] T061 [US6] Implement check result reporting (pass/fail per check) in `crates/cli/src/commands/check.rs`
+- [x] T062 [US6] Handle "No checks defined" message gracefully in `crates/cli/src/commands/check.rs`
+- [x] T063 [US6] Set non-zero exit code on check failure in `crates/cli/src/commands/check.rs`
+- [x] T064 [US6] Register `check` subcommand in `crates/cli/src/commands/mod.rs` and `main.rs`
 
 **Checkpoint**: Validation via `rw check` fully functional
 
@@ -186,13 +186,13 @@
 
 ### Implementation for User Story 7
 
-- [ ] T065 [P] [US7] Create `crates/ops/src/npm.rs` with npm command wrappers
-- [ ] T066 [US7] Implement `npm_pkg_set_script(name: &str, command: &str, cwd: &Path) -> Result<()>` in `crates/ops/src/npm.rs`
-- [ ] T067 [US7] Implement `npm_pkg_get_script(name: &str, cwd: &Path) -> Result<Option<String>>` for diff detection in `crates/ops/src/npm.rs`
-- [ ] T068 [US7] Create `EnsureNpmScript` struct implementing `Ensure` trait in `crates/core/src/ensure/npm.rs`
-- [ ] T069 [US7] Handle EC-004: Fail with actionable error if package.json missing in `crates/core/src/ensure/npm.rs`
-- [ ] T070 [US7] Register `npm.script` ensure type in dispatcher in `crates/core/src/ensure/mod.rs`
-- [ ] T071 [US7] Export npm module in `crates/ops/src/lib.rs`
+- [x] T065 [US7] Create `crates/ops/src/npm.rs` <!-- id: 65 -->
+- [x] T066 [US7] Implement `npm_pkg_set_script` <!-- id: 66 -->
+- [x] T067 [US7] Implement `npm_pkg_get_script` <!-- id: 67 -->
+- [x] T068 [US7] Create `crates/core/src/ensure/npm.rs` <!-- id: 68 -->
+- [x] T069 [US7] Implement `EnsureNpmScript` struct <!-- id: 69 -->
+- [x] T070 [US7] Register `npm.script` in ensure dispatcher <!-- id: 70 -->
+- [x] T071 [US7] Verify `npm.script` with integration test <!-- id: 71 -->
 
 **Checkpoint**: npm.script ensure fully functional
 

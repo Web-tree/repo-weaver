@@ -118,6 +118,15 @@ pub async fn run(args: DescribeArgs) -> anyhow::Result<()> {
                 EnsureConfig::GitClonePinned { url, path, r#ref } => {
                     println!("  - git.clone_pinned: {} -> {} ({})", url, path, r#ref);
                 }
+                EnsureConfig::NpmScript { name, command } => {
+                    println!("  - npm.script: {} -> {}", name, command);
+                }
+                EnsureConfig::AiPatch {
+                    prompt,
+                    verify_command: _,
+                } => {
+                    println!("  - ai.patch: {} (Ensures AI patch is applied)", prompt);
+                }
             }
         }
         println!();

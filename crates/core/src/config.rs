@@ -87,6 +87,14 @@ pub enum EnsureConfig {
         path: String,
         r#ref: String,
     },
+    #[serde(rename = "npm.script")]
+    NpmScript { name: String, command: String },
+    #[serde(rename = "ai.patch")]
+    AiPatch {
+        prompt: String,
+        #[serde(default)]
+        verify_command: String,
+    },
 }
 
 impl ModuleManifest {
