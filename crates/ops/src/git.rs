@@ -63,6 +63,7 @@ pub fn submodule_add(url: &str, path: &Path, ref_: &str) -> anyhow::Result<()> {
     let status = Command::new("git")
         .arg("submodule")
         .arg("add")
+        .arg("--force")
         .arg(url)
         .arg(path)
         .status()?;
