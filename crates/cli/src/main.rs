@@ -3,7 +3,7 @@ mod prompts;
 
 use clap::{CommandFactory, Parser};
 use commands::{apply, init, plan};
-use repo_weaver_core::setup_tracing;
+use repo_weaver_core::{LoggingOptions, setup_tracing_with_options};
 
 #[derive(Parser)]
 #[command(name = "repo-weaver")]
@@ -39,13 +39,20 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    setup_tracing()?;
-
     let cli = Cli::parse();
 
-    // Global flags handling (stub for now, tracing setup logic could be refined here)
-    if cli.verbose {
-        // Adjust logging level
+    // Setup tracing with CLI options
+    let logging_opts = LoggingOptions {
+        json: cli.json,
+        verbose: cli.verbose,
+        quiet: cli.quiet,
+    };
+    setup_tracing_with_options(&logging_opts)?;
+
+    // Handle --no-color: set env var for downstream tools
+    if cli.no_color {
+        // SAFETY: Single-threaded initialization before any child threads are spawned.
+        unsafe { std::env::set_var("NO_COLOR", "1") };
     }
 
     match cli.command {

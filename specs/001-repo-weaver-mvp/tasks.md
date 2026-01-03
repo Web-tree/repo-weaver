@@ -54,8 +54,8 @@
 
 ## Phase 6: Polish & Cross-Cutting
 
-- [ ] T030 [P] Verify JSON logging format for CI/CD
-- [ ] T031 [P] Create `examples/wasm/rust-basic` to verify multi-language plugin support
+- [x] T030 [P] Verify JSON logging format for CI/CD
+- [x] T031 [P] Create `examples/wasm/rust-basic` to verify multi-language plugin support
 
 ## Dependencies
 

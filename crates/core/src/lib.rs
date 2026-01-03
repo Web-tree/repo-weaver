@@ -9,4 +9,4 @@ pub mod secret;
 pub mod state;
 pub mod template;
 
-pub use logging::setup_tracing;
+pub use logging::{LoggingOptions, setup_tracing, setup_tracing_with_options};
