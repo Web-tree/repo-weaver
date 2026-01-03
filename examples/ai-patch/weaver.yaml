@@ -1,0 +1,9 @@
+version: "1"
+apps:
+  - name: "my-ai-app"
+    module: "ai-module"
+    path: "app"
+modules:
+  - name: "ai-module"
+    source: "./modules/ai-module"
+    ref: "HEAD"

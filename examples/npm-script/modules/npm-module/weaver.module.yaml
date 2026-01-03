@@ -1,0 +1,4 @@
+ensures:
+  - type: npm.script
+    name: "test"
+    command: "echo 'This is a test script ensured by weaver'"

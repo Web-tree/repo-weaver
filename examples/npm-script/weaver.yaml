@@ -1,0 +1,9 @@
+version: "1"
+apps:
+  - name: "my-npm-app"
+    module: "npm-module"
+    path: "app"
+modules:
+  - name: "npm-module"
+    source: "./modules/npm-module"
+    ref: "HEAD"

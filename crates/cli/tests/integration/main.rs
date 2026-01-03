@@ -3,6 +3,7 @@ mod apply;
 mod check;
 pub mod common;
 mod describe;
+mod examples;
 mod git_ensures;
 mod includes;
 mod k3s_nebula;

@@ -1,0 +1,4 @@
+ensures:
+  - type: ai.patch
+    prompt: "Create a file named ai_generated.txt with content 'AI was here'"
+    verify_command: "grep 'AI was here' ai_generated.txt"
