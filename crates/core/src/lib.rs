@@ -1,6 +1,7 @@
 pub mod app;
 pub mod config;
 pub mod engine;
+pub mod ensure;
 pub mod lockfile;
 pub mod logging;
 pub mod module;

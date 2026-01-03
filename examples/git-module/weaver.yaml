@@ -1,0 +1,9 @@
+version: "1"
+apps:
+  - name: "my-app"
+    module: "hello-module"
+    path: "app"
+modules:
+  - name: "hello-module"
+    source: "./modules/hello-module"
+    ref: "HEAD"

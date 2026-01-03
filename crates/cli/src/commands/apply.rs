@@ -1,6 +1,6 @@
 use clap::Args;
 use repo_weaver_core::app::App;
-use repo_weaver_core::config::{ModuleManifest, WeaverConfig};
+use repo_weaver_core::config::ModuleManifest;
 use repo_weaver_core::module::ModuleResolver;
 use repo_weaver_core::state::{
     FileState, State, calculate_checksum, calculate_checksum_from_bytes,
@@ -38,7 +38,7 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
     if !config_path.exists() {
         anyhow::bail!("weaver.yaml not found");
     }
-    let config = WeaverConfig::load(config_path)?;
+    let config = repo_weaver_core::config::load_with_includes(config_path)?;
 
     // Load State
     let state_path = Path::new(".rw/state.yaml");
@@ -87,6 +87,28 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
 
         let app = App::instantiate(&app_config_resolved, &manifest)?;
         let dest_root = PathBuf::from(&app.path);
+
+        // 3a. Execute Ensures
+        let ensure_ctx = repo_weaver_core::ensure::EnsureContext {
+            app_path: dest_root.clone(),
+            dry_run,
+            state: state.clone(),
+        };
+
+        for ensure_config in &manifest.ensures {
+            let ensure = repo_weaver_core::ensure::build_ensure(ensure_config)?;
+            let plan = ensure.plan(&ensure_ctx)?;
+            if dry_run {
+                info!("Would ensure: {}", plan.description);
+                // In dry-run, we might want to skip execute if it has side effects
+                // But execute also handles dry-run check internally?
+                // The trait implementation `execute` checks `ctx.dry_run`.
+                ensure.execute(&ensure_ctx)?;
+            } else {
+                info!("Ensuring: {}", plan.description);
+                ensure.execute(&ensure_ctx)?;
+            }
+        }
 
         // Files Processing
         let files_src = module_path.join("files");

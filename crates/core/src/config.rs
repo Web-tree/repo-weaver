@@ -1,13 +1,20 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+pub mod loader;
+pub use loader::*;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WeaverConfig {
     pub version: String,
     #[serde(default)]
+    pub includes: Vec<String>,
+    #[serde(default)]
     pub modules: Vec<ModuleConfig>,
     #[serde(default)]
     pub apps: Vec<AppConfig>,
+    #[serde(default)]
+    pub checks: Vec<CheckDef>,
     #[serde(default)]
     pub secrets: HashMap<String, SecretConfig>,
 }
@@ -36,6 +43,15 @@ pub struct AppConfig {
     pub path: String,
     #[serde(default)]
     pub inputs: HashMap<String, serde_yml::Value>,
+    #[serde(default)]
+    pub checks: Vec<CheckDef>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CheckDef {
+    pub name: String,
+    pub command: String,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,6 +68,25 @@ pub struct ModuleManifest {
     pub outputs: HashMap<String, String>,
     #[serde(default)]
     pub tasks: HashMap<String, TaskDef>,
+    #[serde(default)]
+    pub ensures: Vec<EnsureConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum EnsureConfig {
+    #[serde(rename = "git.submodule")]
+    GitSubmodule {
+        url: String,
+        path: String,
+        r#ref: String,
+    },
+    #[serde(rename = "git.clone_pinned")]
+    GitClonePinned {
+        url: String,
+        path: String,
+        r#ref: String,
+    },
 }
 
 impl ModuleManifest {
