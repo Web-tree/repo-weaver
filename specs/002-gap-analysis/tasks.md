@@ -60,8 +60,8 @@
 - [x] T017 [US1] Handle EC-002: Error on duplicate app names across fragments in `crates/core/src/config/loader.rs`
 - [x] T018 [US1] Add `mod loader` to `crates/core/src/config/mod.rs` and re-export
 - [x] T019 [US1] Integrate `load_with_includes` into `rw apply` and `rw plan` commands in `crates/cli/src/commands/apply.rs`
-- [/] T020 [US1] Add unit tests for merge algorithm in `crates/core/src/config/loader.rs`
-- [ ] T021 [US1] Add integration test for include expansion in `crates/cli/tests/integration/includes.rs`
+- [x] T020 [US1] Add unit tests for merge algorithm in `crates/core/src/config/loader.rs`
+- [x] T021 [US1] Add integration test for include expansion in `crates/cli/tests/integration/includes.rs`
 
 **Checkpoint**: Config includes fully functional and testable
 
@@ -77,9 +77,9 @@
 
 - [x] T022 [US2] Create `crates/cli/src/commands/list.rs` with clap subcommand structure
 - [x] T023 [US2] Implement `--json` flag for JSON output format in `crates/cli/src/commands/list.rs`
-- [/] T024 [US2] Implement `--apps-only` and `--tasks-only` filter flags in `crates/cli/src/commands/list.rs`
+- [x] T024 [US2] Implement `--apps-only` and `--tasks-only` filter flags in `crates/cli/src/commands/list.rs`
 - [x] T025 [US2] Implement default table output format (APPS section with name, path, module) in `crates/cli/src/commands/list.rs`
-- [ ] T026 [US2] Implement TASKS section output (app:task format with description) in `crates/cli/src/commands/list.rs`
+- [x] T026 [US2] Implement TASKS section output (app:task format with description) in `crates/cli/src/commands/list.rs`
 - [x] T027 [US2] Handle empty workspace: "No apps defined" message (exit code 2) in `crates/cli/src/commands/list.rs`
 - [x] T028 [US2] Register `list` subcommand in `crates/cli/src/commands/mod.rs`
 - [x] T029 [US2] Add `list` to main CLI in `crates/cli/src/main.rs`
@@ -107,11 +107,11 @@
 - [x] T035 [US4] Create `EnsureGitSubmodule` struct implementing `Ensure` trait in `crates/core/src/ensure/git.rs`
 - [x] T036 [US4] Implement Safe Checkout: fail if dirty working tree (per spec clarification) in `crates/core/src/ensure/git.rs`
 - [x] T037 [US4] Create `EnsureGitClonePinned` struct implementing `Ensure` trait in `crates/core/src/ensure/git.rs`
-- [ ] T038 [US4] Handle EC-005: Network failure fallback to cache (warn if exists, fail if not) in `crates/core/src/ensure/git.rs`
-- [ ] T039 [US4] Create `crates/core/src/ensure/mod.rs` with type registry and dispatcher
-- [ ] T040 [US4] Register `git.submodule` and `git.clone_pinned` ensure types in dispatcher
-- [ ] T041 [US4] Integrate ensure dispatcher into `rw apply` in `crates/cli/src/commands/apply.rs`
-- [ ] T042 [US4] Add integration test for git.submodule ensure in `crates/cli/tests/integration/git_ensure.rs`
+- [x] T038 [US4] Handle EC-005: Network failure fallback to cache (warn if exists, fail if not) in `crates/core/src/ensure/git.rs`
+- [x] T039 [US4] Create `crates/core/src/ensure/mod.rs` with type registry and dispatcher
+- [x] T040 [US4] Register `git.submodule` and `git.clone_pinned` ensure types in dispatcher
+- [x] T041 [US4] Integrate ensure dispatcher into `rw apply` in `crates/cli/src/commands/apply.rs`
+- [x] T042 [US4] Add integration test for git.submodule ensure in `crates/cli/tests/integration/git_ensure.rs`
 
 **Checkpoint**: Git ensures fully functional with dirty tree detection
 
@@ -125,13 +125,13 @@
 
 ### Implementation for User Story 3
 
-- [ ] T043 [US3] Create `crates/cli/src/commands/describe.rs` with clap subcommand structure
-- [ ] T044 [US3] Implement app lookup with error message listing available apps in `crates/cli/src/commands/describe.rs`
-- [ ] T045 [US3] Implement default YAML-like output format in `crates/cli/src/commands/describe.rs`
-- [ ] T046 [US3] Implement secrets redaction (show as `***`) in `crates/cli/src/commands/describe.rs`
-- [ ] T047 [US3] Implement `--show-secrets` flag with confirmation prompt in `crates/cli/src/commands/describe.rs`
-- [ ] T048 [US3] Implement `--json` flag for JSON output in `crates/cli/src/commands/describe.rs`
-- [ ] T049 [US3] Register `describe` subcommand in `crates/cli/src/commands/mod.rs` and `main.rs`
+- [x] T043 [US3] Create `crates/cli/src/commands/describe.rs` with clap subcommand structure
+- [x] T044 [US3] Implement app lookup with error message listing available apps in `crates/cli/src/commands/describe.rs`
+- [x] T045 [US3] Implement default YAML-like output format in `crates/cli/src/commands/describe.rs`
+- [x] T046 [US3] Implement secrets redaction (show as `***`) in `crates/cli/src/commands/describe.rs`
+- [x] T047 [US3] Implement `--show-secrets` flag with confirmation prompt in `crates/cli/src/commands/describe.rs`
+- [x] T048 [US3] Implement `--json` flag for JSON output in `crates/cli/src/commands/describe.rs`
+- [x] T049 [US3] Register `describe` subcommand in `crates/cli/src/commands/mod.rs` and `main.rs`
 
 **Checkpoint**: App inspection via `rw describe` fully functional
 
@@ -226,11 +226,11 @@
 
 ### Implementation for User Story 9
 
-- [ ] T079 [US9] Create k3s-nebula module fixture in `tests/fixtures/modules/k3s-nebula/`
-- [ ] T080 [US9] Create end-to-end test scenario in `crates/cli/tests/integration/k3s_nebula.rs`
-- [ ] T081 [US9] Verify Taskfile + tfvars generation in test in `crates/cli/tests/integration/k3s_nebula.rs`
-- [ ] T082 [US9] Verify pipeline execution order (terraform plan, apply, output capture, kubectl) in test
-- [ ] T083 [US9] Verify SC-001: Bootstrap under 30 seconds in `crates/cli/tests/integration/k3s_nebula.rs`
+- [x] T079 [US9] Create k3s-nebula module fixture in `tests/fixtures/modules/k3s-nebula/`
+- [x] T080 [US9] Create end-to-end test scenario in `crates/cli/tests/integration/k3s_nebula.rs`
+- [x] T081 [US9] Verify Taskfile + tfvars generation in test in `crates/cli/tests/integration/k3s_nebula.rs`
+- [x] T082 [US9] Verify pipeline execution order (terraform plan, apply, output capture, kubectl) in test
+- [x] T083 [US9] Verify SC-001: Bootstrap under 30 seconds in `crates/cli/tests/integration/k3s_nebula.rs`
 
 **Checkpoint**: k3s-nebula workflow validated against PRD §14
 

@@ -245,10 +245,15 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                         if let Some(parent) = dest_path.parent() {
                             std::fs::create_dir_all(parent)?;
                         }
-                        // Write content (simulated render)
-                        std::fs::write(&dest_path, &content)?; // Todo: Render
+                        // Write content (rendered)
+                        let rendered =
+                            tera::Tera::one_off(&content, &context, false).map_err(|e| {
+                                anyhow::anyhow!("Template error in {:?}: {}", entry.path(), e)
+                            })?;
 
-                        let new_chk = calculate_checksum_from_bytes(content.as_bytes());
+                        std::fs::write(&dest_path, &rendered)?;
+
+                        let new_chk = calculate_checksum_from_bytes(rendered.as_bytes());
                         state.files.insert(
                             dest_path.clone(),
                             FileState {
@@ -258,6 +263,26 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                         );
                     }
                 }
+            }
+        }
+        // Generate terraform.tfvars.json
+        if !app_config_resolved.inputs.is_empty() {
+            let tfvars_path = dest_root.join("terraform.tfvars.json");
+            let content = serde_json::to_string_pretty(&app_config_resolved.inputs)?;
+
+            if dry_run {
+                info!("Would generate {:?}", tfvars_path);
+            } else {
+                std::fs::write(&tfvars_path, &content)?;
+
+                let new_chk = calculate_checksum_from_bytes(content.as_bytes());
+                state.files.insert(
+                    tfvars_path,
+                    FileState {
+                        checksum: new_chk,
+                        last_updated: "now".to_string(),
+                    },
+                );
             }
         }
     }
