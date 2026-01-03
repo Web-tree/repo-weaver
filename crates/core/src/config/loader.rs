@@ -209,4 +209,58 @@ mod tests {
 
         assert_eq!(merged.get("version").unwrap().as_str().unwrap(), "2.0");
     }
+
+    #[test]
+    fn test_merge_nested_maps() {
+        let base_yaml = r#"
+        nested:
+          key1: value1
+          key2: value2
+        "#;
+        let overlay_yaml = r#"
+        nested:
+          key2: new_value2
+          key3: value3
+        "#;
+        let base: Value = serde_yml::from_str(base_yaml).unwrap();
+        let overlay: Value = serde_yml::from_str(overlay_yaml).unwrap();
+        let merged = merge_configs(base, overlay);
+
+        let nested = merged.get("nested").unwrap().as_mapping().unwrap();
+        assert_eq!(
+            nested
+                .get(&Value::String("key1".to_string()))
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "value1"
+        );
+        assert_eq!(
+            nested
+                .get(&Value::String("key2".to_string()))
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "new_value2"
+        );
+        assert_eq!(
+            nested
+                .get(&Value::String("key3".to_string()))
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "value3"
+        );
+    }
+
+    #[test]
+    fn test_merge_empty_base() {
+        let base_yaml = "{}";
+        let overlay_yaml = "foo: bar";
+        let base: Value = serde_yml::from_str(base_yaml).unwrap();
+        let overlay: Value = serde_yml::from_str(overlay_yaml).unwrap();
+        let merged = merge_configs(base, overlay);
+
+        assert_eq!(merged.get("foo").unwrap().as_str().unwrap(), "bar");
+    }
 }

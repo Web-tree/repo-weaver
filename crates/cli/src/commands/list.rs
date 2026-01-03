@@ -1,8 +1,8 @@
 use clap::Args;
-use repo_weaver_core::config::WeaverConfig;
-// use repo_weaver_core::state::State; // Might need state for tasks later?
+use repo_weaver_core::config::{ModuleManifest, WeaverConfig};
+use repo_weaver_core::module::ModuleResolver;
+use std::collections::HashMap;
 use std::path::Path;
-// use tracing::info;
 
 #[derive(Args)]
 pub struct ListArgs {
@@ -44,17 +44,20 @@ pub async fn run(args: ListArgs) -> anyhow::Result<()> {
 }
 
 fn print_json(config: &WeaverConfig, args: &ListArgs) -> anyhow::Result<()> {
-    // T023: JSON output
-    // Struct for JSON output
     use serde::Serialize;
 
-    // Actually, let's look at spec requirements.
-    // "APPS section with name, path, module".
     #[derive(Serialize)]
     struct AppInfo<'a> {
         name: &'a str,
         path: &'a str,
         module: &'a str,
+    }
+
+    #[derive(Serialize)]
+    struct TaskInfoOwned {
+        app: String,
+        name: String,
+        description: String,
     }
 
     let apps: Vec<AppInfo> = config
@@ -67,27 +70,40 @@ fn print_json(config: &WeaverConfig, args: &ListArgs) -> anyhow::Result<()> {
         })
         .collect();
 
-    // Tasks: app:task format.
-    // We need to resolve modules to list tasks?
-    // "TASKS section output (app:task format with description)".
-    // To list tasks, we need to load module manifests.
-    // For now, let's implement apps first.
+    let mut tasks_owned = Vec::new();
+    if !args.apps_only {
+        // Logic for task listing
+        let resolver = ModuleResolver::new(None)?;
+        let module_map: HashMap<_, _> = config.modules.iter().map(|m| (&m.name, m)).collect();
 
-    let include_apps = !args.tasks_only;
-    // let include_tasks = !args.apps_only;
-
-    // For simplicity in first pass, just output apps.
-    // Tasks listing requires module resolution which implies network or cache.
-    // Does `rw list` require fetching modules?
-    // "Discovery Commands... showing apps and tasks".
-    // If modules are not present, we can't show tasks.
-    // We should probably check if modules are cached.
-
-    // For now, let's just dump apps.
+        for app in &config.apps {
+            if let Some(mod_config) = module_map.get(&app.module) {
+                match resolver.resolve(&mod_config.source, &mod_config.r#ref) {
+                    Ok(path) => {
+                        let manifest_path = path.join("weaver.module.yaml");
+                        if manifest_path.exists() {
+                            if let Ok(manifest) = ModuleManifest::load(&manifest_path) {
+                                for (task_name, task_def) in manifest.tasks {
+                                    tasks_owned.push(TaskInfoOwned {
+                                        app: app.name.clone(),
+                                        name: task_name,
+                                        description: task_def.description.unwrap_or_default(),
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+        }
+        // Sort
+        tasks_owned.sort_by(|a, b| a.app.cmp(&b.app).then(a.name.cmp(&b.name)));
+    }
 
     let json_output = serde_json::json!({
-        "apps": if include_apps { Some(apps) } else { None },
-        "tasks": [] // Placeholder
+        "apps": if !args.tasks_only { Some(apps) } else { None },
+        "tasks": if !args.apps_only { Some(tasks_owned) } else { None }
     });
 
     println!("{}", serde_json::to_string_pretty(&json_output)?);
@@ -95,11 +111,6 @@ fn print_json(config: &WeaverConfig, args: &ListArgs) -> anyhow::Result<()> {
 }
 
 fn print_table(config: &WeaverConfig, args: &ListArgs) -> anyhow::Result<()> {
-    // T025: Table format
-    // Use simple println for MVP or a table crate?
-    // "default table output format".
-    // Let's use simple formatting.
-
     if !args.tasks_only {
         if config.apps.is_empty() {
             println!("No apps defined.");
@@ -113,9 +124,42 @@ fn print_table(config: &WeaverConfig, args: &ListArgs) -> anyhow::Result<()> {
     }
 
     if !args.apps_only {
-        // Tasks placeholder
-        // println!("\nTASKS");
-        // ...
+        let resolver = ModuleResolver::new(None)?;
+        let module_map: HashMap<_, _> = config.modules.iter().map(|m| (&m.name, m)).collect();
+        let mut tasks = Vec::new();
+
+        for app in &config.apps {
+            if let Some(mod_config) = module_map.get(&app.module) {
+                if let Ok(path) = resolver.resolve(&mod_config.source, &mod_config.r#ref) {
+                    let manifest_path = path.join("weaver.module.yaml");
+                    if manifest_path.exists() {
+                        if let Ok(manifest) = ModuleManifest::load(&manifest_path) {
+                            for (task_name, task_def) in manifest.tasks {
+                                tasks.push((
+                                    app.name.clone(),
+                                    task_name,
+                                    task_def.description.unwrap_or_default(),
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if !tasks.is_empty() {
+            // Sort
+            tasks.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+
+            println!("\nTASKS:");
+            for (app, task, desc) in tasks {
+                // app:task format
+                let full_name = format!("{}:{}", app, task);
+                println!("  {:<30} {}", full_name, desc);
+            }
+        } else if args.tasks_only {
+            println!("No tasks found (modules might not be resolved or define no tasks).");
+        }
     }
 
     Ok(())

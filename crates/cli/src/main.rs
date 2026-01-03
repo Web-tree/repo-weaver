@@ -2,7 +2,7 @@ mod commands;
 mod prompts;
 
 use clap::{CommandFactory, Parser};
-use commands::{apply, init, list, plan};
+use commands::{apply, describe, init, list, plan};
 use repo_weaver_core::{LoggingOptions, setup_tracing_with_options};
 
 #[derive(Parser)]
@@ -35,6 +35,7 @@ enum Commands {
     Plan(plan::PlanArgs),
     Apply(apply::ApplyArgs),
     List(list::ListArgs),
+    Describe(describe::DescribeArgs),
     Run(crate::commands::run::RunArgs),
 }
 
@@ -68,6 +69,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::List(args)) => {
             list::run(args).await?;
+        }
+        Some(Commands::Describe(args)) => {
+            describe::run(args).await?;
         }
         Some(Commands::Run(args)) => {
             crate::commands::run::run(args).await?;

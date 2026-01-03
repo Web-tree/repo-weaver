@@ -40,10 +40,17 @@ impl Ensure for EnsureGitSubmodule {
         }
 
         if git::is_submodule_registered(&target_path)? {
-            git::submodule_sync_init_update(&target_path, &self.ref_)
+            if let Err(e) = git::submodule_sync_init_update(&target_path, &self.ref_) {
+                tracing::warn!(
+                    "Failed to update submodule at {:?}: {}. Using cached version.",
+                    target_path,
+                    e
+                );
+            }
         } else {
-            git::submodule_add(&self.url, &target_path, &self.ref_)
+            git::submodule_add(&self.url, &target_path, &self.ref_)?
         }
+        Ok(())
     }
 }
 
@@ -82,6 +89,17 @@ impl Ensure for EnsureGitClonePinned {
             return Ok(());
         }
 
-        git::clone_pinned(&self.url, &target_path, &self.ref_)
+        if let Err(e) = git::clone_pinned(&self.url, &target_path, &self.ref_) {
+            if target_path.exists() {
+                tracing::warn!(
+                    "Failed to update git clone at {:?}: {}. Using cached version.",
+                    target_path,
+                    e
+                );
+            } else {
+                return Err(e);
+            }
+        }
+        Ok(())
     }
 }
