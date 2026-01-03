@@ -9,7 +9,9 @@ pub fn ensure_dir(path: &Path) -> anyhow::Result<()> {
 }
 
 pub fn copy(src: &Path, dest: &Path) -> anyhow::Result<()> {
-    let options = CopyOptions::new(); // Default options
+    let mut options = CopyOptions::new();
+    options.overwrite = true;
+    options.content_only = true;
     fs_extra::dir::copy(src, dest, &options)?;
     Ok(())
 }

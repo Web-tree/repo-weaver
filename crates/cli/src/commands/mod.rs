@@ -1,2 +1,5 @@
 pub mod apply;
-pub mod run; // For later
+pub mod init;
+pub mod plan;
+pub mod run;
+// For later

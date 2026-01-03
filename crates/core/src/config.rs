@@ -66,6 +66,7 @@ impl ModuleManifest {
 pub struct InputDef {
     pub r#type: String,
     pub default: Option<serde_yml::Value>,
+    pub description: Option<String>,
     #[serde(default)]
     pub required: bool,
 }

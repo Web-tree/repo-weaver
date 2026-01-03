@@ -21,7 +21,6 @@ A reusable package sourced from Git.
 #### Module Content Structure
 
 A module directory MUST contain a manifest and templates:
-
 - **weaver.module.yaml** (Manifest):
   - `inputs`: Variable definitions (name, type, default, required).
   - `outputs`: Values to export after execution.

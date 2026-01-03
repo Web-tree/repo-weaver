@@ -2,26 +2,30 @@
 name = "repo-weaver"
 version.workspace = true
 edition.workspace = true
-default-run = "repo-weaver"
+default-run = "rw"
 
 [[bin]]
-name = "repo-weaver"
+name = "rw"
 path = "src/main.rs"
 
 [dependencies]
 clap.workspace = true
 console.workspace = true
 dialoguer.workspace = true
-indicatif.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yml.workspace = true
+thiserror.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
-repo-weaver-core.workspace = true
 repo-weaver-ops.workspace = true
+repo-weaver-core.workspace = true
 tera.workspace = true
 walkdir.workspace = true
 
 [dev-dependencies]
 assert_cmd.workspace = true
 predicates.workspace = true
+tempfile.workspace = true
