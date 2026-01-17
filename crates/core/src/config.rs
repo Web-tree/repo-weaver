@@ -5,6 +5,16 @@ pub mod loader;
 pub use loader::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginConfig {
+    #[serde(default)]
+    pub git: Option<String>,
+    #[serde(default)]
+    pub path: Option<String>,
+    #[serde(default, rename = "ref")]
+    pub git_ref: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WeaverConfig {
     pub version: String,
     #[serde(default)]
@@ -17,6 +27,8 @@ pub struct WeaverConfig {
     pub checks: Vec<CheckDef>,
     #[serde(default)]
     pub secrets: HashMap<String, SecretConfig>,
+    #[serde(default)]
+    pub plugins: HashMap<String, PluginConfig>,
 }
 
 impl WeaverConfig {

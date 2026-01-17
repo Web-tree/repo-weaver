@@ -32,19 +32,19 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Add `PluginConfig` struct with `git`, `path`, `ref` fields in `crates/core/src/config.rs`
-- [ ] T006 Add `plugins: HashMap<String, PluginConfig>` to `WeaverConfig` in `crates/core/src/config.rs`
-- [ ] T007 [P] Create `PluginSource` enum (Local, Git, Registry) in `crates/core/src/plugin/mod.rs`
-- [ ] T008 [P] Create `PluginMetadata` struct (sha256, resolved_at, source_url, build_method) in `crates/core/src/plugin/mod.rs`
-- [ ] T009 [P] Create `ResolvedPlugin` struct in `crates/core/src/plugin/mod.rs`
-- [ ] T010 Add `PluginLock` struct to `crates/core/src/lockfile.rs`
-- [ ] T011 Extend `LockFile` struct with `plugins: HashMap<String, PluginLock>` in `crates/core/src/lockfile.rs`
-- [ ] T012 [P] Create `PluginCache` struct with `root: PathBuf` in `crates/core/src/plugin/cache.rs`
-- [ ] T013 Implement `PluginCache::has()`, `get()`, `store()` methods in `crates/core/src/plugin/cache.rs`
-- [ ] T014 Implement `PluginCache::link()` symlink creation (Unix) in `crates/core/src/plugin/cache.rs`
-- [ ] T015 [P] Add cache directory accessibility check on startup in `crates/core/src/plugin/cache.rs`
-- [ ] T016 [P] Implement broken symlink detection and auto-cleanup in `crates/core/src/plugin/cache.rs`
-- [ ] T017 [P] Create error types with remediation suggestions in `crates/core/src/plugin/mod.rs`
+- [x] T005 Add `PluginConfig` struct with `git`, `path`, `ref` fields in `crates/core/src/config.rs`
+- [x] T006 Add `plugins: HashMap<String, PluginConfig>` to `WeaverConfig` in `crates/core/src/config.rs`
+- [x] T007 [P] Create `PluginSource` enum (Local, Git, Registry) in `crates/core/src/plugin/mod.rs`
+- [x] T008 [P] Create `PluginMetadata` struct (sha256, resolved_at, source_url, build_method) in `crates/core/src/plugin/mod.rs`
+- [x] T009 [P] Create `ResolvedPlugin` struct in `crates/core/src/plugin/mod.rs`
+- [x] T010 Add `PluginLock` struct to `crates/core/src/lockfile.rs`
+- [x] T011 Extend `LockFile` struct with `plugins: HashMap<String, PluginLock>` in `crates/core/src/lockfile.rs`
+- [x] T012 [P] Create `PluginCache` struct with `root: PathBuf` in `crates/core/src/plugin/cache.rs`
+- [x] T013 Implement `PluginCache::has()`, `get()`, `store()` methods in `crates/core/src/plugin/cache.rs`
+- [x] T014 Implement `PluginCache::link()` symlink creation (Unix) in `crates/core/src/plugin/cache.rs`
+- [x] T015 [P] Add cache directory accessibility check on startup in `crates/core/src/plugin/cache.rs`
+- [x] T016 [P] Implement broken symlink detection and auto-cleanup in `crates/core/src/plugin/cache.rs`
+- [x] T017 [P] Create error types with remediation suggestions in `crates/core/src/plugin/mod.rs`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
