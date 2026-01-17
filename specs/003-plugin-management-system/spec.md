@@ -15,6 +15,50 @@
 - Q: What level of observability should the plugin system provide? → A: Verbose mode (`-v`) with structured logs for resolution, loading, timing.
 - Q: What should happen when source build is needed but no container runtime is detected? → A: Error with instructions to install Docker or Podman.
 
+### Session 2026-01-17 (Checklist Review)
+
+#### Platform Support
+- **Target platforms**: macOS and Linux only. Windows users should use WSL.
+- **Global cache location**: `~/.rw/plugins/<name>/<version>`
+
+#### Build & Distribution
+- **WASM asset naming**: `<plugin-name>.wasm` (kebab-case). One `.wasm` file per release; error if 0 or >1 found.
+- **Download behavior**: 30s timeout, 3 retries with exponential backoff.
+- **Build container**: Published to `ghcr.io/web-tree/rw-plugin-builder`. Output from `target/wasm32-wasip2/release/<name>.wasm`.
+- **Build timeout**: 10 minutes default; error with clear message if exceeded.
+- **Container runtime detection**: Check for `docker` first, then `podman`. Use whichever is found.
+- **Network during build**: Allowed (required to fetch crates from crates.io).
+- **Host cargo cache**: Mount `~/.cargo/registry` if available (optimization, not required).
+- **Invalid WASM after build**: Validate using wasmtime load. Error: "Build succeeded but WASM is invalid/incompatible: {reason}".
+- **Disk/memory failures**: Show clear error to user.
+
+#### Resolution & Caching
+- **Cache permissions**: Check home dir accessibility on startup; clear error if unwritable.
+- **Concurrent access**: Out of scope for v1 (single-user focus).
+- **Cache pruning**: `rw plugins prune` command to remove unused/old versions.
+- **Symlinks**: Standard Unix symlinks. No Windows-specific handling needed.
+- **Broken symlinks**: Detect and auto-cleanup during resolution.
+- **Offline mode**: `--offline` flag errors if any plugin not cached. Implicit behavior: prefer cache, fallback to network.
+- **SHA256 format**: Hex-encoded (64 chars) in `weaver.lock`.
+- **Lockfile merge conflicts**: Document: "Resolve `weaver.yaml` conflicts first, then run `rw apply` to regenerate lockfile".
+- **Checksum mismatch**: Error + require `rw plugins update` to re-fetch. Never auto-update.
+- **Lockfile validation**: Validate YAML structure on load; error with line number if malformed.
+- **500ms performance**: Measured with warm cache (plugin already resolved once in session).
+- **Update with commit hash**: Warning: "Plugin pinned to specific commit, no update available."
+
+#### Configuration & UX
+- **Config precedence**: Explicit config in `weaver.yaml` wins over auto-discovery.
+- **Plugin schema**: `name: {git?: string, path?: string, ref?: string}`. `path` and `git` are mutually exclusive.
+- **Plugin naming**: kebab-case, max 64 characters.
+- **Registry URL**: `RW_REGISTRY_URL` env var takes precedence, else config, else default.
+- **Local path plugins**: No caching; always load fresh from path.
+- **Nonexistent local path**: Error: "Plugin path not found: ./my-plugin".
+- **Corrupted weaver.yaml**: Error: "Failed to parse weaver.yaml: {parse error}" with line number.
+- **Offline + missing plugin**: Error: "Plugin 'npm-script' not cached. Run online first or use explicit config."
+- **Orphan plugins**: Out of scope for v1.
+- **Progress feedback**: Spinner for downloads/builds; detailed output with `-v`.
+- **Detailed error definition**: Error type + source location + 1+ remediation steps.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Zero-Config Plugin Usage (Priority: P1)
