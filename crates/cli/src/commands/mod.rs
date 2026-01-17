@@ -5,4 +5,5 @@ pub mod init;
 pub mod list;
 pub mod module;
 pub mod plan;
+pub mod plugins;
 pub mod run;

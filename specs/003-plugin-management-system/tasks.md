@@ -19,10 +19,10 @@
 
 **Purpose**: Project initialization and module structure
 
-- [ ] T001 Create plugin management module structure at `crates/core/src/plugin/` with `mod.rs` updates
-- [ ] T002 [P] Add dependencies `reqwest`, `sha2` to `crates/core/Cargo.toml`
-- [ ] T003 [P] Create CLI commands module structure at `crates/cli/src/commands/plugins.rs`
-- [ ] T004 Register `plugins` command group in `crates/cli/src/main.rs`
+- [x] T001 Create plugin management module structure at `crates/core/src/plugin/` with `mod.rs` updates
+- [x] T002 [P] Add dependencies `reqwest`, `sha2` to `crates/core/Cargo.toml`
+- [x] T003 [P] Create CLI commands module structure at `crates/cli/src/commands/plugins.rs`
+- [x] T004 Register `plugins` command group in `crates/cli/src/main.rs`
 
 ---
 

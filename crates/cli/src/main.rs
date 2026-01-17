@@ -41,6 +41,8 @@ enum Commands {
     Module(commands::module::ModuleArgs),
     /// Run configured checks
     Check(commands::check::CheckArgs),
+    /// Manage plugins
+    Plugins(commands::plugins::PluginsArgs),
     Run(crate::commands::run::RunArgs),
 }
 
@@ -86,6 +88,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Check(args)) => {
             commands::check::execute(args)?;
+        }
+        Some(Commands::Plugins(args)) => {
+            commands::plugins::execute(args)?;
         }
         None => {
             Cli::command().print_help()?;
