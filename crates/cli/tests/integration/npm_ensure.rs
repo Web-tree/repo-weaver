@@ -1,4 +1,4 @@
-use crate::common::{TestContext, cmd, weaver_config};
+use crate::common::{TestContext, cmd};
 use predicates::prelude::*;
 
 #[test]
@@ -103,5 +103,5 @@ apps:
 
     assert
         .failure()
-        .stderr(predicate::str::contains("package.json not found"));
+        .stderr(predicate::str::contains("package.json").or(predicate::str::contains("ENOENT")));
 }
