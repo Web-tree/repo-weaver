@@ -2,6 +2,7 @@
   "name": "my-npm-app",
   "version": "1.0.0",
   "scripts": {
-    "start": "echo 'start'"
+    "start": "echo 'start'",
+    "test": "echo 'This is a test script ensured by weaver'"
   }
 }

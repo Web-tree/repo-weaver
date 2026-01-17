@@ -37,3 +37,32 @@ world provider {
     import process;
     export secrets;
 }
+
+// Ensure plugin interface
+interface ensures {
+    record ensure-request {
+        app-path: string,
+        dry-run: bool,
+        config: string,  // JSON-serialized ensure config
+    }
+
+    record ensure-plan {
+        description: string,
+        actions: list<string>,
+    }
+
+    variant ensure-error {
+        config-error(string),
+        execution-error(string),
+        not-applicable(string),
+    }
+
+    plan: func(req: ensure-request) -> result<ensure-plan, ensure-error>;
+    execute: func(req: ensure-request) -> result<string, ensure-error>;
+}
+
+world ensure-provider {
+    import process;
+    export ensures;
+}
+

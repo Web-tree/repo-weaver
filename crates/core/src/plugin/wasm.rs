@@ -1,6 +1,6 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
-use wasmtime::component::{Linker, ResourceTable, bindgen};
+use wasmtime::component::{HasSelf, Linker, ResourceTable, bindgen};
 use wasmtime::{Config, Engine};
 
 bindgen!({
@@ -25,7 +25,7 @@ impl weaver::plugin::process::Host for Host {
     fn exec(
         &mut self,
         req: weaver::plugin::process::ExecRequest,
-    ) -> wasmtime::Result<Result<weaver::plugin::process::ExecResult, String>> {
+    ) -> Result<weaver::plugin::process::ExecResult, String> {
         // Policy: Allowlist? For MVP, we allow everything but could restrict.
         // Spec says "Host can reject...". For now, we trust the plugin in MVP.
 
@@ -54,27 +54,27 @@ impl weaver::plugin::process::Host for Host {
 
         let mut child = match cmd.spawn() {
             Ok(c) => c,
-            Err(e) => return Ok(Err(format!("Failed to spawn {}: {}", req.program, e))),
+            Err(e) => return Err(format!("Failed to spawn {}: {}", req.program, e)),
         };
 
         if let Some(input) = &req.stdin {
             if let Some(mut s) = child.stdin.take() {
                 if let Err(e) = s.write_all(input) {
-                    return Ok(Err(format!("Failed to write stdin: {}", e)));
+                    return Err(format!("Failed to write stdin: {}", e));
                 }
             }
         }
 
         let output = child
             .wait_with_output()
-            .map_err(|e| anyhow::anyhow!("Failed to wait on child: {}", e))?;
+            .map_err(|e| format!("Failed to wait on child: {}", e))?;
         let code = output.status.code().unwrap_or(1) as u32;
 
-        Ok(Ok(weaver::plugin::process::ExecResult {
+        Ok(weaver::plugin::process::ExecResult {
             status: code,
             stdout: output.stdout,
             stderr: output.stderr,
-        }))
+        })
     }
 }
 
@@ -92,7 +92,7 @@ impl WasmPluginEngine {
         let mut linker = Linker::new(&engine);
 
         // Link our world
-        Provider::add_to_linker(&mut linker, |state: &mut Host| state)?;
+        Provider::add_to_linker::<Host, HasSelf<Host>>(&mut linker, |state| state)?;
 
         Ok(Self { engine, linker })
     }

@@ -5,6 +5,7 @@ use std::path::PathBuf;
 pub mod ai;
 pub mod git;
 pub mod npm;
+pub mod plugin_wrapper;
 
 use crate::state::State;
 
