@@ -3,6 +3,7 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 use wasmtime::component::{Component, HasSelf, Linker, ResourceTable, bindgen};
 use wasmtime::{Config, Engine, Store};
+use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiView};
 
 bindgen!({
     world: "ensure-provider",
@@ -11,12 +12,26 @@ bindgen!({
 
 pub struct EnsureHost {
     pub table: ResourceTable,
+    pub wasi: WasiCtx,
 }
 
 impl EnsureHost {
     pub fn new() -> Self {
+        // Build WASI context with inherited environment
+        let wasi = WasiCtxBuilder::new().inherit_stdio().inherit_env().build();
+
         Self {
             table: ResourceTable::new(),
+            wasi,
+        }
+    }
+}
+
+impl WasiView for EnsureHost {
+    fn ctx(&mut self) -> wasmtime_wasi::WasiCtxView<'_> {
+        wasmtime_wasi::WasiCtxView {
+            ctx: &mut self.wasi,
+            table: &mut self.table,
         }
     }
 }
@@ -88,7 +103,10 @@ impl EnsurePluginEngine {
 
         let mut linker: Linker<EnsureHost> = Linker::new(&engine);
 
-        // Only add our custom interfaces (no WASI needed as plugin uses our process import)
+        // Add WASI support (required by cargo-component built plugins)
+        wasmtime_wasi::p2::add_to_linker_sync(&mut linker)?;
+
+        // Add our custom ensure-provider interface
         EnsureProvider::add_to_linker::<EnsureHost, HasSelf<EnsureHost>>(&mut linker, |state| {
             state
         })?;

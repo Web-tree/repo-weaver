@@ -2,6 +2,7 @@ use clap::Args;
 use repo_weaver_core::app::App;
 use repo_weaver_core::config::ModuleManifest;
 use repo_weaver_core::module::ModuleResolver;
+use repo_weaver_core::plugin::resolver::PluginResolver;
 use repo_weaver_core::state::{
     FileState, State, calculate_checksum, calculate_checksum_from_bytes,
 };
@@ -19,6 +20,10 @@ pub struct ApplyArgs {
     /// Conflict resolution strategy
     #[arg(long, default_value = "stop")]
     pub strategy: String, // Parsing enum later
+
+    /// Offline mode - error if plugins not cached
+    #[arg(long)]
+    pub offline: bool,
 }
 
 pub async fn run(args: ApplyArgs) -> anyhow::Result<()> {
@@ -48,6 +53,10 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
     let resolver = ModuleResolver::new(None)?;
     let _template_engine = TemplateEngine::new()?;
     let tera_context = tera::Context::new();
+
+    // Initialize plugin resolver for plugin-based ensures
+    let mut plugin_resolver = PluginResolver::new(PathBuf::from("."))?;
+    plugin_resolver.set_offline(args.offline);
 
     // 3. Process Apps
     for app_config in &config.apps {
@@ -96,7 +105,9 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
         };
 
         for ensure_config in &manifest.ensures {
-            let ensure = repo_weaver_core::ensure::build_ensure(ensure_config)?;
+            let ensure =
+                repo_weaver_core::ensure::build_ensure(ensure_config, Some(&plugin_resolver))
+                    .await?;
             let plan = ensure.plan(&ensure_ctx)?;
             if dry_run {
                 info!("Would ensure: {}", plan.description);

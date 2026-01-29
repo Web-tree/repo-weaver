@@ -20,6 +20,7 @@ pub async fn run(args: PlanArgs) -> anyhow::Result<()> {
     let apply_args = crate::commands::apply::ApplyArgs {
         auto_approve: false,          // Plan is interactive for inputs
         strategy: "stop".to_string(), // Default strategy to detect drift
+        offline: false,               // Plan command doesn't support offline mode
     };
 
     let result = crate::commands::apply::execute(apply_args, true).await;

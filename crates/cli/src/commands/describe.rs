@@ -1,7 +1,6 @@
 use clap::Args;
-use repo_weaver_core::config::{ModuleManifest, WeaverConfig};
+use repo_weaver_core::config::ModuleManifest;
 use repo_weaver_core::module::ModuleResolver;
-use serde::Serialize;
 use serde_yml::Value;
 use std::collections::HashMap;
 use std::path::Path;

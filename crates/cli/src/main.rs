@@ -5,6 +5,9 @@ use clap::{CommandFactory, Parser};
 use commands::{apply, describe, init, list, plan};
 use repo_weaver_core::{LoggingOptions, setup_tracing_with_options};
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const GIT_HASH: &str = env!("GIT_HASH");
+
 #[derive(Parser)]
 #[command(name = "repo-weaver")]
 #[command(about = "Declarative repository management")]
@@ -27,6 +30,10 @@ struct Cli {
     /// Output logs/result in JSON format
     #[arg(long, global = true)]
     json: bool,
+
+    /// Display version information
+    #[arg(long)]
+    version: bool,
 }
 
 #[derive(clap::Subcommand)]
@@ -49,6 +56,12 @@ enum Commands {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
+
+    // Handle --version flag
+    if cli.version {
+        println!("repo-weaver {} ({})", VERSION, GIT_HASH);
+        return Ok(());
+    }
 
     // Setup tracing with CLI options
     let logging_opts = LoggingOptions {

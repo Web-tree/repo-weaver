@@ -23,8 +23,13 @@ pub trait Ensure {
 }
 
 // Builder function to create appropriate Ensure implementation from config
-pub fn build_ensure(config: &crate::config::EnsureConfig) -> Result<Box<dyn Ensure>> {
+pub async fn build_ensure(
+    config: &crate::config::EnsureConfig,
+    plugin_resolver: Option<&crate::plugin::resolver::PluginResolver>,
+) -> Result<Box<dyn Ensure>> {
     use crate::config::EnsureConfig;
+    use crate::plugin::ensure_wasm::EnsurePluginEngine;
+    use std::sync::Arc;
 
     match config {
         EnsureConfig::GitSubmodule { url, path, r#ref } => Ok(Box::new(git::EnsureGitSubmodule {
@@ -39,12 +44,57 @@ pub fn build_ensure(config: &crate::config::EnsureConfig) -> Result<Box<dyn Ensu
                 ref_: r#ref.clone(),
             }))
         }
-        EnsureConfig::NpmScript { .. } | EnsureConfig::AiPatch { .. } => {
-            // These require plugin/AI infrastructure that isn't set up yet
-            // TODO: Implement when plugin system is ready (T018-T028 in tasks.md)
-            Err(anyhow::anyhow!(
-                "NpmScript and AiPatch ensures not yet implemented - requires plugin management system from Phase 3"
-            ))
+        EnsureConfig::NpmScript { name, command } => {
+            let resolver = plugin_resolver.ok_or_else(|| {
+                anyhow::anyhow!("Plugin resolver required for npm.script ensures")
+            })?;
+
+            // Resolve plugin for npm.script type
+            let resolved = resolver.resolve_ensure_type("npm.script").await?;
+
+            // Load the plugin using EnsurePluginEngine
+            let engine = EnsurePluginEngine::new()?;
+            let plugin = Arc::new(engine.load_plugin(&resolved.wasm_path)?);
+
+            // Serialize config to JSON for the plugin
+            let config_json = serde_json::json!({
+                "type": "npm.script",
+                "name": name,
+                "command": command,
+            })
+            .to_string();
+
+            Ok(Box::new(plugin_wrapper::EnsurePluginWrapper::new(
+                plugin,
+                config_json,
+            )))
+        }
+        EnsureConfig::AiPatch {
+            prompt,
+            verify_command,
+        } => {
+            let resolver = plugin_resolver
+                .ok_or_else(|| anyhow::anyhow!("Plugin resolver required for ai.patch ensures"))?;
+
+            // Resolve plugin for ai.patch type
+            let resolved = resolver.resolve_ensure_type("ai.patch").await?;
+
+            // Load the plugin using EnsurePluginEngine
+            let engine = EnsurePluginEngine::new()?;
+            let plugin = Arc::new(engine.load_plugin(&resolved.wasm_path)?);
+
+            // Serialize config to JSON for the plugin
+            let config_json = serde_json::json!({
+                "type": "ai.patch",
+                "prompt": prompt,
+                "verify_command": verify_command,
+            })
+            .to_string();
+
+            Ok(Box::new(plugin_wrapper::EnsurePluginWrapper::new(
+                plugin,
+                config_json,
+            )))
         }
     }
 }

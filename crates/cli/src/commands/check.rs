@@ -2,7 +2,6 @@ use clap::Args;
 use comfy_table::Table;
 use console::style;
 use repo_weaver_core::config::{CheckDef, WeaverConfig};
-use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
 

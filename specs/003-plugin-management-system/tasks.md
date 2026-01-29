@@ -58,17 +58,17 @@
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Create `PluginResolver` struct in `crates/core/src/plugin/resolver.rs`
-- [ ] T019 [US1] Implement `PluginResolver::new()` constructor in `crates/core/src/plugin/resolver.rs`
-- [ ] T020 [US1] Implement `resolve_ensure_type()` auto-discovery logic in `crates/core/src/plugin/resolver.rs`
-- [ ] T021 [US1] Implement default registry URL resolution (RW_REGISTRY_URL env var → config → default) in `crates/core/src/plugin/resolver.rs`
-- [ ] T022 [P] [US1] Create `PluginFetcher` struct in `crates/core/src/plugin/fetcher.rs`
-- [ ] T023 [US1] Implement `fetch_release()` for GitHub Releases download in `crates/core/src/plugin/fetcher.rs`
-- [ ] T024 [US1] Add download timeout (30s), retry logic (3 retries with exponential backoff) in `crates/core/src/plugin/fetcher.rs`
-- [ ] T025 [US1] Implement SHA256 checksum calculation and verification in `crates/core/src/plugin/resolver.rs`
-- [ ] T026 [US1] Integrate plugin resolution into `rw apply` command flow (existing code modification)
-- [ ] T027 [US1] Add lockfile generation/update for resolved plugins in `crates/core/src/plugin/resolver.rs`
-- [ ] T028 [US1] Implement `--offline` flag handling (error if plugin not cached) in `crates/core/src/plugin/resolver.rs`
+- [x] T018 [US1] Create `PluginResolver` struct in `crates/core/src/plugin/resolver.rs`
+- [x] T019 [US1] Implement `PluginResolver::new()` constructor in `crates/core/src/plugin/resolver.rs`
+- [x] T020 [US1] Implement `resolve_ensure_type()` auto-discovery logic in `crates/core/src/plugin/resolver.rs`
+- [x] T021 [US1] Implement default registry URL resolution (RW_REGISTRY_URL env var → config → default) in `crates/core/src/plugin/resolver.rs`
+- [x] T022 [P] [US1] Create `PluginFetcher` struct in `crates/core/src/plugin/fetcher.rs`
+- [x] T023 [US1] Implement `fetch_release()` for GitHub Releases download in `crates/core/src/plugin/fetcher.rs`
+- [x] T024 [US1] Add download timeout (30s), retry logic (3 retries with exponential backoff) in `crates/core/src/plugin/fetcher.rs`
+- [x] T025 [US1] Implement SHA256 checksum calculation and verification in `crates/core/src/plugin/resolver.rs`
+- [x] T026 [US1] Integrate plugin resolution into `rw apply` command flow (existing code modification)
+- [x] T027 [US1] Add lockfile generation/update for resolved plugins in `crates/core/src/plugin/resolver.rs`
+- [x] T028 [US1] Implement `--offline` flag handling (error if plugin not cached) in `crates/core/src/plugin/resolver.rs`
 
 **Checkpoint**: Zero-config usage should now work - `rw apply` auto-downloads required plugins
 
