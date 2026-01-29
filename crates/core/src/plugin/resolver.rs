@@ -171,6 +171,38 @@ impl PluginResolver {
                     });
                 }
 
+                // DEVELOPMENT MODE: Check if we're in the repo-weaver development directory
+                // and if a local plugin exists in plugins/ directory
+                if let Some(local_wasm) = self.try_load_dev_plugin(name)? {
+                    let sha256 = calculate_sha256(&local_wasm);
+
+                    // Store in cache for consistency
+                    let cached_path = self.cache.store(name, &version, &local_wasm)?;
+
+                    let resolved = ResolvedPlugin {
+                        name: name.to_string(),
+                        version,
+                        source: PluginSource::Git {
+                            url: url.clone(),
+                            git_ref,
+                        },
+                        wasm_path: cached_path,
+                        metadata: PluginMetadata {
+                            sha256,
+                            resolved_at: chrono::Utc::now().to_rfc3339(),
+                            source_url: format!("local:plugins/{}", name),
+                            build_method: BuildMethod::Local,
+                        },
+                    };
+
+                    // Track resolved plugin for lockfile
+                    self.resolved_plugins
+                        .borrow_mut()
+                        .push((name.to_string(), resolved.clone()));
+
+                    return Ok(resolved);
+                }
+
                 // Fetch from git
                 let wasm_data = self.fetcher.fetch_release(&url, &git_ref).await?;
                 let sha256 = calculate_sha256(&wasm_data);
@@ -358,6 +390,51 @@ impl PluginResolver {
 
         // Default registry
         "https://plugins.repo-weaver.dev".to_string()
+    }
+
+    /// Try to load a plugin from the local development plugins/ directory
+    /// Returns Some(wasm_bytes) if found, None otherwise
+    fn try_load_dev_plugin(&self, name: &str) -> Result<Option<Vec<u8>>, PluginError> {
+        // Check if we're in a development environment by looking for plugins/ directory
+        // relative to the project root
+        let potential_paths = vec![
+            // From project directory
+            self.project_dir
+                .join("plugins")
+                .join(name)
+                .join("plugin.wasm"),
+            // Go up one level (in case we're in a subdirectory like examples/)
+            self.project_dir
+                .join("..")
+                .join("plugins")
+                .join(name)
+                .join("plugin.wasm"),
+            // Go up two levels
+            self.project_dir
+                .join("../..")
+                .join("plugins")
+                .join(name)
+                .join("plugin.wasm"),
+        ];
+
+        for path in potential_paths {
+            if let Ok(canonical) = path.canonicalize() {
+                if canonical.exists() {
+                    match fs::read(&canonical) {
+                        Ok(data) => {
+                            eprintln!(
+                                "✓ Loaded plugin from local development: {}",
+                                canonical.display()
+                            );
+                            return Ok(Some(data));
+                        }
+                        Err(_) => continue,
+                    }
+                }
+            }
+        }
+
+        Ok(None)
     }
 }
 

@@ -2,7 +2,7 @@ version: '1'
 modules: {}
 plugins:
   npm-script:
-    version: latest
-    source: registry:npm-script
+    version: main
+    source: git:https://github.com/web-tree/rw-plugins@main
     sha256: cc162b7905819c4410c58af9b910a029810483de636f542f74ddb5b438ce9e66
-    resolved_at: '2026-01-29T22:22:00.621837+00:00'
+    resolved_at: '2026-01-29T23:02:21.270795+00:00'
