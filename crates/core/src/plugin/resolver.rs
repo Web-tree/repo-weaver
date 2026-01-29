@@ -7,6 +7,7 @@ use super::{
 use crate::config::PluginConfig;
 use crate::lockfile::{Lockfile, PluginLock};
 use sha2::{Digest, Sha256};
+use std::cell::RefCell;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -15,6 +16,8 @@ pub struct PluginResolver {
     project_dir: PathBuf,
     fetcher: PluginFetcher,
     offline: bool,
+    // Track resolved plugins for lockfile generation
+    resolved_plugins: RefCell<Vec<(String, ResolvedPlugin)>>,
 }
 
 impl PluginResolver {
@@ -28,6 +31,7 @@ impl PluginResolver {
             project_dir,
             fetcher: PluginFetcher::new(),
             offline: false,
+            resolved_plugins: RefCell::new(Vec::new()),
         })
     }
 
@@ -107,7 +111,7 @@ impl PluginResolver {
 
                 let sha256 = calculate_sha256(&wasm_data);
 
-                Ok(ResolvedPlugin {
+                let resolved = ResolvedPlugin {
                     name: name.to_string(),
                     version: "local".to_string(),
                     source: PluginSource::Local { path: path.clone() },
@@ -118,7 +122,14 @@ impl PluginResolver {
                         source_url: format!("file://{}", path.display()),
                         build_method: BuildMethod::Local,
                     },
-                })
+                };
+
+                // Track resolved plugin for lockfile
+                self.resolved_plugins
+                    .borrow_mut()
+                    .push((name.to_string(), resolved.clone()));
+
+                Ok(resolved)
             }
             PluginSource::Git { url, git_ref } => {
                 // For git sources, check cache first, then fetch
@@ -129,7 +140,7 @@ impl PluginResolver {
                         fs::read(&cached_path).map_err(|e| PluginError::Other(e.into()))?;
                     let sha256 = calculate_sha256(&wasm_data);
 
-                    return Ok(ResolvedPlugin {
+                    let resolved = ResolvedPlugin {
                         name: name.to_string(),
                         version: version.clone(),
                         source: PluginSource::Git {
@@ -143,7 +154,14 @@ impl PluginResolver {
                             source_url: url.clone(),
                             build_method: BuildMethod::Prebuilt,
                         },
-                    });
+                    };
+
+                    // Track resolved plugin for lockfile
+                    self.resolved_plugins
+                        .borrow_mut()
+                        .push((name.to_string(), resolved.clone()));
+
+                    return Ok(resolved);
                 }
 
                 // Not cached - check offline mode
@@ -160,7 +178,7 @@ impl PluginResolver {
                 // Store in cache
                 let cached_path = self.cache.store(name, &version, &wasm_data)?;
 
-                Ok(ResolvedPlugin {
+                let resolved = ResolvedPlugin {
                     name: name.to_string(),
                     version,
                     source: PluginSource::Git {
@@ -174,7 +192,14 @@ impl PluginResolver {
                         source_url: url,
                         build_method: BuildMethod::Prebuilt,
                     },
-                })
+                };
+
+                // Track resolved plugin for lockfile
+                self.resolved_plugins
+                    .borrow_mut()
+                    .push((name.to_string(), resolved.clone()));
+
+                Ok(resolved)
             }
             PluginSource::Registry { name: plugin_name } => {
                 // For registry sources, resolve URL from environment/config/default
@@ -193,7 +218,7 @@ impl PluginResolver {
                         fs::read(&cached_path).map_err(|e| PluginError::Other(e.into()))?;
                     let sha256 = calculate_sha256(&wasm_data);
 
-                    return Ok(ResolvedPlugin {
+                    let resolved = ResolvedPlugin {
                         name: plugin_name.clone(),
                         version: version.clone(),
                         source: PluginSource::Registry {
@@ -203,10 +228,17 @@ impl PluginResolver {
                         metadata: PluginMetadata {
                             sha256,
                             resolved_at: chrono::Utc::now().to_rfc3339(),
-                            source_url: download_url,
+                            source_url: download_url.clone(),
                             build_method: BuildMethod::Prebuilt,
                         },
-                    });
+                    };
+
+                    // Track resolved plugin for lockfile
+                    self.resolved_plugins
+                        .borrow_mut()
+                        .push((plugin_name.clone(), resolved.clone()));
+
+                    return Ok(resolved);
                 }
 
                 // Not cached - check offline mode
@@ -223,7 +255,7 @@ impl PluginResolver {
                 // Store in cache
                 let cached_path = self.cache.store(&plugin_name, &version, &wasm_data)?;
 
-                Ok(ResolvedPlugin {
+                let resolved = ResolvedPlugin {
                     name: plugin_name.clone(),
                     version,
                     source: PluginSource::Registry { name: plugin_name },
@@ -234,9 +266,21 @@ impl PluginResolver {
                         source_url: download_url,
                         build_method: BuildMethod::Prebuilt,
                     },
-                })
+                };
+
+                // Track resolved plugin for lockfile
+                self.resolved_plugins
+                    .borrow_mut()
+                    .push((resolved.name.clone(), resolved.clone()));
+
+                Ok(resolved)
             }
         }
+    }
+
+    /// Get all resolved plugins for lockfile generation
+    pub fn get_resolved_plugins(&self) -> Vec<(String, ResolvedPlugin)> {
+        self.resolved_plugins.borrow().clone()
     }
 
     /// Verify a plugin against lockfile checksum

@@ -82,12 +82,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T029 [US2] Implement `PluginResolver::resolve()` for explicit PluginConfig in `crates/core/src/plugin/resolver.rs`
-- [ ] T030 [US2] Implement Git source resolution (git URL + ref → release download) in `crates/core/src/plugin/resolver.rs`
-- [ ] T031 [US2] Implement lockfile verification (checksum mismatch detection) in `crates/core/src/plugin/resolver.rs`
-- [ ] T032 [US2] Add checksum mismatch error with remediation (require `rw plugins update`) in `crates/core/src/plugin/resolver.rs`
-- [ ] T033 [P] [US2] Implement `rw plugins list` command in `crates/cli/src/commands/plugins.rs`
-- [ ] T034 [P] [US2] Implement `rw plugins verify` command in `crates/cli/src/commands/plugins.rs`
+- [x] T029 [US2] Implement `PluginResolver::resolve()` for explicit PluginConfig in `crates/core/src/plugin/resolver.rs`
+- [x] T030 [US2] Implement Git source resolution (git URL + ref → release download) in `crates/core/src/plugin/resolver.rs`
+- [x] T031 [US2] Implement lockfile verification (checksum mismatch detection) in `crates/core/src/plugin/resolver.rs`
+- [x] T032 [US2] Add checksum mismatch error with remediation (require `rw plugins update`) in `crates/core/src/plugin/resolver.rs`
+- [x] T033 [P] [US2] Implement `rw plugins list` command in `crates/cli/src/commands/plugins.rs`
+- [x] T034 [P] [US2] Implement `rw plugins verify` command in `crates/cli/src/commands/plugins.rs`
 - [ ] T035 [US2] Implement `rw plugins update` command (single plugin + --all) in `crates/cli/src/commands/plugins.rs`
 - [ ] T036 [US2] Add warning for commit-hash-pinned plugins on update in `crates/cli/src/commands/plugins.rs`
 

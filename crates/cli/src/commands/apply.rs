@@ -299,6 +299,13 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
     }
 
     if !dry_run {
+        // Update lockfile with resolved plugins
+        let resolved_plugins = plugin_resolver.get_resolved_plugins();
+        if !resolved_plugins.is_empty() {
+            let lockfile_path = Path::new("weaver.lock");
+            plugin_resolver.update_lockfile(lockfile_path, &resolved_plugins)?;
+        }
+
         state.save(state_path)?;
         info!("Apply complete.");
     } else {
