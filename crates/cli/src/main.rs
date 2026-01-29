@@ -103,7 +103,7 @@ async fn main() -> anyhow::Result<()> {
             commands::check::execute(args)?;
         }
         Some(Commands::Plugins(args)) => {
-            commands::plugins::execute(args)?;
+            commands::plugins::execute(args).await?;
         }
         None => {
             Cli::command().print_help()?;

@@ -88,8 +88,8 @@
 - [x] T032 [US2] Add checksum mismatch error with remediation (require `rw plugins update`) in `crates/core/src/plugin/resolver.rs`
 - [x] T033 [P] [US2] Implement `rw plugins list` command in `crates/cli/src/commands/plugins.rs`
 - [x] T034 [P] [US2] Implement `rw plugins verify` command in `crates/cli/src/commands/plugins.rs`
-- [ ] T035 [US2] Implement `rw plugins update` command (single plugin + --all) in `crates/cli/src/commands/plugins.rs`
-- [ ] T036 [US2] Add warning for commit-hash-pinned plugins on update in `crates/cli/src/commands/plugins.rs`
+- [x] T035 [US2] Implement `rw plugins update` command (single plugin + --all) in `crates/cli/src/commands/plugins.rs`
+- [x] T036 [US2] Add warning for commit-hash-pinned plugins on update in `crates/cli/src/commands/plugins.rs`
 
 **Checkpoint**: Explicit configuration and lockfile integrity should work
 

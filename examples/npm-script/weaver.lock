@@ -5,4 +5,4 @@ plugins:
     version: latest
     source: registry:npm-script
     sha256: cc162b7905819c4410c58af9b910a029810483de636f542f74ddb5b438ce9e66
-    resolved_at: '2026-01-29T22:01:46.341472+00:00'
+    resolved_at: '2026-01-29T22:22:00.621837+00:00'

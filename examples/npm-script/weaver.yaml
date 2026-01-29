@@ -7,3 +7,14 @@ modules:
   - name: "npm-module"
     source: "./modules/npm-module"
     ref: "HEAD"
+
+# Test plugin configurations for update command
+plugins:
+  npm-script:
+    git: "https://github.com/web-tree/rw-plugins"
+    ref: "main"
+  
+  # This one is pinned to a commit hash
+  pinned-plugin:
+    git: "https://github.com/example/plugin"
+    ref: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
