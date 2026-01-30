@@ -103,10 +103,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T037 [US3] Add Local path resolution to `PluginResolver::resolve()` in `crates/core/src/plugin/resolver.rs`
-- [ ] T038 [US3] Implement path existence validation with clear error message in `crates/core/src/plugin/resolver.rs`
-- [ ] T039 [US3] Skip caching and symlinking for local path plugins in `crates/core/src/plugin/resolver.rs`
-- [ ] T040 [US3] Add mutual exclusivity validation (path vs git) in config parsing in `crates/core/src/config.rs`
+- [x] T037 [US3] Add Local path resolution to `PluginResolver::resolve()` in `crates/core/src/plugin/resolver.rs`
+- [x] T038 [US3] Implement path existence validation with clear error message in `crates/core/src/plugin/resolver.rs`
+- [x] T039 [US3] Skip caching and symlinking for local path plugins in `crates/core/src/plugin/resolver.rs`
+- [x] T040 [US3] Add mutual exclusivity validation (path vs git) in config parsing in `crates/core/src/config.rs`
 
 **Checkpoint**: Local path plugin development workflow should work
 

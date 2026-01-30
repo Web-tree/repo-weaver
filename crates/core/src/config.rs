@@ -35,7 +35,33 @@ impl WeaverConfig {
     pub fn load(path: &std::path::Path) -> anyhow::Result<Self> {
         let content = std::fs::read_to_string(path)?;
         let config: Self = serde_yml::from_str(&content)?;
+        config.validate()?;
         Ok(config)
+    }
+
+    pub fn validate(&self) -> anyhow::Result<()> {
+        for (name, plugin) in &self.plugins {
+            plugin.validate(name)?;
+        }
+        Ok(())
+    }
+}
+
+impl PluginConfig {
+    pub fn validate(&self, name: &str) -> anyhow::Result<()> {
+        if self.git.is_some() && self.path.is_some() {
+            anyhow::bail!(
+                "Plugin '{}' cannot have both 'git' and 'path' properties. Please choose one.",
+                name
+            );
+        }
+        if self.git.is_none() && self.path.is_none() {
+            anyhow::bail!(
+                "Plugin '{}' must have either 'git' or 'path' property.",
+                name
+            );
+        }
+        Ok(())
     }
 }
 
