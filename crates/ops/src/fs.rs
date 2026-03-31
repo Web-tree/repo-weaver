@@ -15,3 +15,11 @@ pub fn copy(src: &Path, dest: &Path) -> anyhow::Result<()> {
     fs_extra::dir::copy(src, dest, &options)?;
     Ok(())
 }
+
+pub fn copy_file(src: &Path, dest: &Path) -> anyhow::Result<()> {
+    if let Some(parent) = dest.parent() {
+        ensure_dir(parent)?;
+    }
+    std::fs::copy(src, dest)?;
+    Ok(())
+}
