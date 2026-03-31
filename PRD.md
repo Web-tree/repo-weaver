@@ -487,11 +487,3 @@ Repo Weaver is acceptable when:
 * passes outputs into config apply step
 
 4. You can add a new module that introduces a new task and ensure type without changing existing app configs beyond referencing the module.
-
-If you want, the next deliverable can be a concrete YAML schema reference (field-by-field), plus a minimal file layout for:
-
-* core repo-weaver repo
-* a “common module” repo
-* a k3s-nebula wrapper module
-* example weaver.yaml and generated outputs for one cluster workspace
-
