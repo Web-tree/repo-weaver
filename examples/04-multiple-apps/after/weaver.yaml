@@ -1,0 +1,18 @@
+version: "1"
+modules:
+  - name: "service"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "staging"
+    module: "service"
+    path: "apps/staging"
+    inputs:
+      app_name: "web"
+      env: "staging"
+  - name: "production"
+    module: "service"
+    path: "apps/production"
+    inputs:
+      app_name: "web"
+      env: "production"

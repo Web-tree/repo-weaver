@@ -1,0 +1,13 @@
+version: "1"
+modules:
+  - name: "starter"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "app"
+    module: "starter"
+    path: "app"
+    inputs:
+      project_name: "my-project"
+      description: "A sample project scaffolded by Repo Weaver"
+      port: 3000
