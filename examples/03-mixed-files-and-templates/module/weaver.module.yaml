@@ -1,0 +1,13 @@
+inputs:
+  project_name:
+    type: string
+    required: true
+    description: "Name of the project"
+  description:
+    type: string
+    required: true
+    description: "Short project description"
+  port:
+    type: number
+    required: true
+    description: "Port the service listens on"

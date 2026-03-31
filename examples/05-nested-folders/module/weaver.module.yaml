@@ -1,0 +1,13 @@
+inputs:
+  project_name:
+    type: string
+    required: true
+    description: "Name of the service"
+  port:
+    type: number
+    required: true
+    description: "HTTP port"
+  db_name:
+    type: string
+    required: true
+    description: "Database name"
