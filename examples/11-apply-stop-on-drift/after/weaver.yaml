@@ -1,0 +1,10 @@
+version: "1"
+modules:
+  - name: "k8s-base"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "checkout"
+    module: "k8s-base"
+    path: "app"
+    inputs: {}

@@ -1,0 +1,11 @@
+version: "1"
+modules:
+  - name: "payments-ops"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "payments"
+    module: "payments-ops"
+    path: "services/payments"
+    inputs:
+      region: "us-east-1"

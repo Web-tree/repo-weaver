@@ -1,0 +1,9 @@
+inputs:
+  region:
+    type: string
+    required: true
+    description: "Default deployment region"
+tasks:
+  deploy:
+    description: "Run the deployment helper"
+    command: "sh scripts/deploy.sh"

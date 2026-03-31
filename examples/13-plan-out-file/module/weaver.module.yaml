@@ -1,0 +1,5 @@
+inputs:
+  retention_days:
+    type: number
+    required: true
+    description: "Number of days to retain audit logs"
