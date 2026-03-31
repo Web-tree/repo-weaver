@@ -1,0 +1,10 @@
+version: "1"
+modules:
+  - name: "service-config"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "billing"
+    module: "service-config"
+    path: "app"
+    inputs: {}

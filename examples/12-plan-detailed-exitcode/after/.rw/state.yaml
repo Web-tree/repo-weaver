@@ -1,0 +1,6 @@
+version: 1
+files:
+  app/settings.yaml:
+    checksum: "86fd62c27bfe0cfbb182d0473ea41a8511fe9c3db8ffb98aeb3d14021bd65932"
+    source: "service-config:files/settings.yaml"
+    managed: true

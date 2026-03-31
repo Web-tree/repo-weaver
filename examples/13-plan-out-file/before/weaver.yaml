@@ -1,0 +1,11 @@
+version: "1"
+modules:
+  - name: "policy-pack"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "org-policy"
+    module: "policy-pack"
+    path: "app"
+    inputs:
+      retention_days: 90

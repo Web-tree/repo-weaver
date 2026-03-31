@@ -1,0 +1,6 @@
+version: 1
+files:
+  app/deployment.yaml:
+    checksum: "46cf36eb4bfb155547f875a3ee38e14a1b44d54c7de180d4048337c2852cfd17"
+    source: "k8s-base:files/deployment.yaml"
+    managed: true
