@@ -23,6 +23,10 @@ impl Engine {
         Ok(())
     }
 
+    pub fn ensure_file_copy(src: &Path, dest: &Path) -> anyhow::Result<()> {
+        repo_weaver_ops::fs::copy_file(src, dest)
+    }
+
     pub fn ensure_task_wrapper(path: &Path, command: &str) -> anyhow::Result<()> {
         let content = format!("#!/bin/sh\nexec {}\n", command);
         if let Some(parent) = path.parent() {

@@ -1,9 +1,23 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WeaverConfig {
     pub version: String,
+    #[serde(default)]
+    pub includes: Vec<String>,
+    #[serde(default)]
+    pub modules: Vec<ModuleConfig>,
+    #[serde(default)]
+    pub apps: Vec<AppConfig>,
+    #[serde(default)]
+    pub secrets: HashMap<String, SecretConfig>,
+}
+
+/// A config fragment loaded from includes or weaver.d/ — version is optional.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct WeaverConfigFragment {
     #[serde(default)]
     pub modules: Vec<ModuleConfig>,
     #[serde(default)]
@@ -13,10 +27,64 @@ pub struct WeaverConfig {
 }
 
 impl WeaverConfig {
-    pub fn load(path: &std::path::Path) -> anyhow::Result<Self> {
+    pub fn load(path: &Path) -> anyhow::Result<Self> {
         let content = std::fs::read_to_string(path)?;
         let config: Self = serde_yml::from_str(&content)?;
         Ok(config)
+    }
+
+    pub fn load_with_includes(path: &Path) -> anyhow::Result<Self> {
+        let mut config = Self::load(path)?;
+        let base_dir = path.parent().unwrap_or(Path::new("."));
+
+        // Collect include paths from explicit includes field
+        let mut include_paths = Vec::new();
+        for pattern in &config.includes {
+            let full_pattern = base_dir.join(pattern);
+            let pattern_str = full_pattern.to_string_lossy().to_string();
+            for entry in glob::glob(&pattern_str)? {
+                let p = entry?;
+                if p.is_file() {
+                    include_paths.push(p);
+                }
+            }
+        }
+
+        // Auto-discover weaver.d/*.yaml
+        let weaver_d = base_dir.join("weaver.d");
+        if weaver_d.is_dir() {
+            let pattern = weaver_d.join("*.yaml");
+            let pattern_str = pattern.to_string_lossy().to_string();
+            for entry in glob::glob(&pattern_str)? {
+                let p = entry?;
+                if p.is_file() && !include_paths.contains(&p) {
+                    include_paths.push(p);
+                }
+            }
+        }
+
+        // Sort for deterministic ordering
+        include_paths.sort();
+
+        // Merge fragments
+        for inc_path in &include_paths {
+            let content = std::fs::read_to_string(inc_path)?;
+            let fragment: WeaverConfigFragment = serde_yml::from_str(&content)?;
+            config.merge_fragment(fragment);
+        }
+
+        Ok(config)
+    }
+
+    fn merge_fragment(&mut self, fragment: WeaverConfigFragment) {
+        // Arrays: concatenate
+        self.modules.extend(fragment.modules);
+        self.apps.extend(fragment.apps);
+
+        // Maps: later wins
+        for (k, v) in fragment.secrets {
+            self.secrets.insert(k, v);
+        }
     }
 }
 
@@ -24,7 +92,7 @@ impl WeaverConfig {
 pub struct ModuleConfig {
     pub name: String,
     pub source: String,
-    pub r#ref: String, // "ref" is a keyword in some languages, but okay in Rust struct field? No, "ref" is keyword. Use raw identifier.
+    pub r#ref: String,
     #[serde(default)]
     pub path: Option<String>,
 }
@@ -75,4 +143,174 @@ pub struct InputDef {
 pub struct TaskDef {
     pub command: String,
     pub description: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_load_single_file_no_includes() {
+        let dir = TempDir::new().unwrap();
+        let config_path = dir.path().join("weaver.yaml");
+        fs::write(
+            &config_path,
+            r#"
+version: "1.0"
+modules:
+  - name: base
+    source: "https://example.com/mod"
+    ref: "v1.0"
+apps:
+  - name: my-app
+    module: base
+    path: "."
+"#,
+        )
+        .unwrap();
+
+        let config = WeaverConfig::load_with_includes(&config_path).unwrap();
+        assert_eq!(config.modules.len(), 1);
+        assert_eq!(config.apps.len(), 1);
+    }
+
+    #[test]
+    fn test_merge_modules_concatenate() {
+        let dir = TempDir::new().unwrap();
+        let weaver_d = dir.path().join("weaver.d");
+        fs::create_dir(&weaver_d).unwrap();
+
+        let config_path = dir.path().join("weaver.yaml");
+        fs::write(
+            &config_path,
+            r#"
+version: "1.0"
+modules:
+  - name: base
+    source: "https://example.com/base"
+    ref: "v1"
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            weaver_d.join("extra.yaml"),
+            r#"
+modules:
+  - name: extra
+    source: "https://example.com/extra"
+    ref: "v2"
+apps:
+  - name: extra-app
+    module: extra
+    path: "./extra"
+"#,
+        )
+        .unwrap();
+
+        let config = WeaverConfig::load_with_includes(&config_path).unwrap();
+        assert_eq!(config.modules.len(), 2);
+        assert_eq!(config.modules[0].name, "base");
+        assert_eq!(config.modules[1].name, "extra");
+        assert_eq!(config.apps.len(), 1);
+        assert_eq!(config.apps[0].name, "extra-app");
+    }
+
+    #[test]
+    fn test_merge_secrets_override() {
+        let dir = TempDir::new().unwrap();
+        let weaver_d = dir.path().join("weaver.d");
+        fs::create_dir(&weaver_d).unwrap();
+
+        let config_path = dir.path().join("weaver.yaml");
+        fs::write(
+            &config_path,
+            r#"
+version: "1.0"
+secrets:
+  db_password:
+    provider: env
+    key: DB_PASS
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            weaver_d.join("secrets.yaml"),
+            r#"
+secrets:
+  db_password:
+    provider: aws-ssm
+    key: /prod/db/password
+"#,
+        )
+        .unwrap();
+
+        let config = WeaverConfig::load_with_includes(&config_path).unwrap();
+        let secret = config.secrets.get("db_password").unwrap();
+        assert_eq!(secret.provider, "aws-ssm");
+        assert_eq!(secret.key, "/prod/db/password");
+    }
+
+    #[test]
+    fn test_include_glob_pattern() {
+        let dir = TempDir::new().unwrap();
+        let conf_dir = dir.path().join("conf");
+        fs::create_dir(&conf_dir).unwrap();
+
+        let config_path = dir.path().join("weaver.yaml");
+        fs::write(
+            &config_path,
+            r#"
+version: "1.0"
+includes:
+  - "conf/*.yaml"
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            conf_dir.join("apps.yaml"),
+            r#"
+apps:
+  - name: from-include
+    module: base
+    path: "./inc"
+"#,
+        )
+        .unwrap();
+
+        let config = WeaverConfig::load_with_includes(&config_path).unwrap();
+        assert_eq!(config.apps.len(), 1);
+        assert_eq!(config.apps[0].name, "from-include");
+    }
+
+    #[test]
+    fn test_deterministic_ordering() {
+        let dir = TempDir::new().unwrap();
+        let weaver_d = dir.path().join("weaver.d");
+        fs::create_dir(&weaver_d).unwrap();
+
+        let config_path = dir.path().join("weaver.yaml");
+        fs::write(&config_path, "version: \"1.0\"\n").unwrap();
+
+        fs::write(
+            weaver_d.join("b.yaml"),
+            "apps:\n  - name: b-app\n    module: m\n    path: b\n",
+        )
+        .unwrap();
+        fs::write(
+            weaver_d.join("a.yaml"),
+            "apps:\n  - name: a-app\n    module: m\n    path: a\n",
+        )
+        .unwrap();
+
+        let config = WeaverConfig::load_with_includes(&config_path).unwrap();
+        assert_eq!(config.apps.len(), 2);
+        // a.yaml sorts before b.yaml
+        assert_eq!(config.apps[0].name, "a-app");
+        assert_eq!(config.apps[1].name, "b-app");
+    }
 }

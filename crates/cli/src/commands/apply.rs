@@ -1,6 +1,7 @@
 use clap::Args;
 use repo_weaver_core::app::App;
 use repo_weaver_core::config::{ModuleManifest, WeaverConfig};
+use repo_weaver_core::engine::Engine;
 use repo_weaver_core::module::ModuleResolver;
 use repo_weaver_core::state::{
     FileState, State, calculate_checksum, calculate_checksum_from_bytes,
@@ -38,7 +39,7 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
     if !config_path.exists() {
         anyhow::bail!("weaver.yaml not found");
     }
-    let config = WeaverConfig::load(config_path)?;
+    let config = WeaverConfig::load_with_includes(config_path)?;
 
     // Load State
     let state_path = Path::new(".rw/state.yaml");
@@ -46,7 +47,7 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
 
     // 2. Init components
     let resolver = ModuleResolver::new(None)?;
-    let _template_engine = TemplateEngine::new()?;
+    let template_engine = TemplateEngine::new()?;
     let tera_context = tera::Context::new();
 
     // 3. Process Apps
@@ -65,20 +66,23 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
 
         // Resolve missing inputs (Interactive)
         let answers_path = Path::new(".rw/answers.yaml");
+        let interactive = !args.auto_approve;
         let resolved_inputs = crate::prompts::resolve_missing_inputs(
             &manifest,
             &app_config.inputs,
-            !args.auto_approve, // Interactive if not auto-approve?
-            // Spec says "Interactive Prompts". Usually implied by TTY access.
-            // But auto_approve flag usually refers to confirmation.
-            // Let's assume always interactive unless auto-approve is specified?
-            // Or maybe separate --no-input flag?
-            // "System checks... if interactive... prompt".
-            // auto_approve skips "Review Plan? [y/N]".
-            // Missing variables should probably block even in auto-approve unless defaults exist.
-            // If auto-approve is on, we are likely non-interactive.
-            // Let's allow prompting unless auto_approve is true (non-interactive mode).
+            interactive,
             &answers_path,
+            &app_config.name,
+        )?;
+
+        // Clean up stale answers for removed inputs
+        let current_keys: std::collections::HashSet<String> =
+            manifest.inputs.keys().cloned().collect();
+        crate::prompts::cleanup_stale_answers(
+            &answers_path,
+            &app_config.name,
+            &current_keys,
+            interactive,
         )?;
 
         // Merge resolved inputs into config clone
@@ -128,23 +132,10 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
 
                     // Write File
                     if dry_run {
-                        // Just log
                         info!("Would copy {:?} to {:?}", entry.path(), dest_path);
                     } else {
-                        if !dest_path.exists() {
-                            if let Some(parent) = dest_path.parent() {
-                                std::fs::create_dir_all(parent)?;
-                            }
-                        } else if args.strategy == "stop" && !args.auto_approve {
-                            // Double check: if it exists, it might be identical.
-                            // Or it is unmanaged.
-                            // But if we passed drift check above (managed & matched), we are fine.
-                            // If unmanaged (not in state), we are taking ownership.
-                        }
+                        Engine::ensure_file_copy(entry.path(), &dest_path)?;
 
-                        std::fs::copy(entry.path(), &dest_path)?;
-
-                        // Update State
                         let new_chk = calculate_checksum(&dest_path)?;
                         state.files.insert(
                             dest_path.clone(),
@@ -169,8 +160,21 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                     let content = std::fs::read_to_string(entry.path())?;
                     let mut context = tera_context.clone();
                     for (k, v) in &app.inputs {
-                        // TODO: handle types properly
-                        context.insert(k, v);
+                        match v {
+                            serde_yml::Value::String(s) => context.insert(k, s),
+                            serde_yml::Value::Number(n) => {
+                                if let Some(i) = n.as_i64() {
+                                    context.insert(k, &i);
+                                } else if let Some(f) = n.as_f64() {
+                                    context.insert(k, &f);
+                                }
+                            }
+                            serde_yml::Value::Bool(b) => context.insert(k, b),
+                            other => {
+                                let s = serde_yml::to_string(other).unwrap_or_default();
+                                context.insert(k, &s);
+                            }
+                        }
                     }
                     // Basic rendering, should use template_engine properly
                     // For MVP just text replacement logic or tera one-off?
@@ -220,13 +224,13 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                     if dry_run {
                         info!("Would render {:?} to {:?}", entry.path(), dest_path);
                     } else {
+                        let rendered = template_engine.render(&content, &context)?;
                         if let Some(parent) = dest_path.parent() {
                             std::fs::create_dir_all(parent)?;
                         }
-                        // Write content (simulated render)
-                        std::fs::write(&dest_path, &content)?; // Todo: Render
+                        std::fs::write(&dest_path, &rendered)?;
 
-                        let new_chk = calculate_checksum_from_bytes(content.as_bytes());
+                        let new_chk = calculate_checksum_from_bytes(rendered.as_bytes());
                         state.files.insert(
                             dest_path.clone(),
                             FileState {
