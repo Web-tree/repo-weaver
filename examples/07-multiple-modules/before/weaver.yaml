@@ -1,0 +1,17 @@
+version: "1"
+modules:
+  - name: "backend"
+    source: "../module-backend"
+    ref: "v1"
+  - name: "frontend"
+    source: "../module-frontend"
+    ref: "v1"
+apps:
+  - name: "api"
+    module: "backend"
+    path: "api"
+    inputs: {}
+  - name: "web"
+    module: "frontend"
+    path: "web"
+    inputs: {}

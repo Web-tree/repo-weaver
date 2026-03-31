@@ -1,0 +1,5 @@
+apps:
+  - name: "app"
+    module: "base"
+    path: "app"
+    inputs: {}

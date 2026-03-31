@@ -1,0 +1,12 @@
+version: "1"
+modules:
+  - name: "service"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "app"
+    module: "service"
+    path: "app"
+    inputs:
+      project_name: "my-service"
+      port: 8080

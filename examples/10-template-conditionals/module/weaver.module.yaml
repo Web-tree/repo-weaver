@@ -1,0 +1,17 @@
+inputs:
+  image_name:
+    type: string
+    required: true
+    description: "Docker image name"
+  enable_db:
+    type: bool
+    default: false
+    description: "Include a PostgreSQL database service"
+  db_name:
+    type: string
+    default: "app"
+    description: "Database name"
+  ports:
+    type: "list(string)"
+    required: true
+    description: "List of ports to expose"

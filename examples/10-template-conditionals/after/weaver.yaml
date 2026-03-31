@@ -1,0 +1,16 @@
+version: "1"
+modules:
+  - name: "compose"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "app"
+    module: "compose"
+    path: "app"
+    inputs:
+      image_name: "myapp"
+      enable_db: true
+      db_name: "appdb"
+      ports:
+        - "3000"
+        - "8080"

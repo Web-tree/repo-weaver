@@ -1,0 +1,9 @@
+inputs:
+  app_name:
+    type: string
+    required: true
+    description: "Application name"
+  env:
+    type: string
+    required: true
+    description: "Deployment environment"

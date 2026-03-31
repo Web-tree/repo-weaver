@@ -1,0 +1,3 @@
+version=2.0
+feature_x=true
+feature_y=false

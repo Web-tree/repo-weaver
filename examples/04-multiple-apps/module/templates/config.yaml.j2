@@ -1,0 +1,5 @@
+app:
+  name: {{ app_name }}
+  environment: {{ env }}
+
+replicas: {% if env == "production" %}3{% else %}1{% endif %}

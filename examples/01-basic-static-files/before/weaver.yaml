@@ -1,0 +1,10 @@
+version: "1"
+modules:
+  - name: "basic"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "app"
+    module: "basic"
+    path: "app"
+    inputs: {}

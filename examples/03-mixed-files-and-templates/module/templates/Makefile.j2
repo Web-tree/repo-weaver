@@ -1,0 +1,12 @@
+.PHONY: build run test
+
+PROJECT_NAME := {{ project_name }}
+
+build:
+	@echo "Building $(PROJECT_NAME)..."
+
+run:
+	@echo "Running $(PROJECT_NAME) on port {{ port }}..."
+
+test:
+	@echo "Testing $(PROJECT_NAME)..."
