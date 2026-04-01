@@ -1,0 +1,23 @@
+version: "1"
+modules:
+  - name: "rust-base"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "release-helper"
+    module: "rust-base"
+    path: "tools/release-helper"
+    inputs: {}
+    ensures:
+      - type: "ensure.cargo.dep"
+        name: "clap"
+        version: "4.5.31"
+        features: ["derive"]
+      - type: "ensure.cargo.dep"
+        name: "serde"
+        version: "1.0.218"
+        features: ["derive"]
+      - type: "ensure.cargo.dep"
+        name: "serde_json"
+        version: "1.0.140"
+      - type: "ensure.cargo.fmt"

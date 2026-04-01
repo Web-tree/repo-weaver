@@ -1,0 +1,6 @@
+github.com/go-chi/chi/v5 v5.1.0 h1:2f6W9T4kR5vC8eN3bD1zY7mP0uQ4aL9sH6xJ3nK2wV8=
+github.com/go-chi/chi/v5 v5.1.0/go.mod h1:K9mV2wP4aX7cN1qE6rT8yU3iO5pL0kJ2hG4fD6sA9z=
+github.com/jackc/pgx/v5 v5.7.2 h1:mQfJvW2jvWqfNnV7A7U9QKk5d2A1sXy6N4fJHkPj2Yw=
+github.com/jackc/pgx/v5 v5.7.2/go.mod h1:Wk6l5XvG4e3t2s1q9p8o7n6m5l4k3j2h1g0fEdCbAa=
+go.uber.org/zap v1.27.0 h1:Q4rW7tY2uI8oP1aS5dF9gH3jK6lZ0xC2vB4nM7qR1t=
+go.uber.org/zap v1.27.0/go.mod h1:J8kL2mN6pQ0rS4tV7wX1yZ5aC9dF3gH6jK0lP2oR5u=

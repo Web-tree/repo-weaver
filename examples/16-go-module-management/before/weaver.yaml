@@ -1,0 +1,18 @@
+version: "1"
+modules:
+  - name: "go-base"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "catalog"
+    module: "go-base"
+    path: "services/catalog"
+    inputs: {}
+    ensures:
+      - type: "ensure.go.module_dep"
+        module: "github.com/go-chi/chi/v5"
+        version: "v5.1.0"
+      - type: "ensure.go.module_dep"
+        module: "go.uber.org/zap"
+        version: "v1.27.0"
+      - type: "ensure.go.tidy"
