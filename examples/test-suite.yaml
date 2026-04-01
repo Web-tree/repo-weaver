@@ -1,0 +1,42 @@
+defaults:
+  stage: pending
+  args: ["apply", "--auto-approve"]
+  ignore_paths:
+    - weaver.lock
+    - .rw/state.yaml
+
+examples:
+  01-basic-static-files:
+    stage: pending
+  02-template-rendering:
+    stage: pending
+  03-mixed-files-and-templates:
+    stage: pending
+  04-multiple-apps:
+    stage: pending
+  05-nested-folders:
+    stage: pending
+  06-config-includes:
+    stage: pending
+  07-multiple-modules:
+    stage: pending
+  08-module-update:
+    stage: pending
+  09-drift-detection:
+    stage: pending
+  10-template-conditionals:
+    stage: pending
+  11-apply-stop-on-drift:
+    stage: pending
+  12-plan-detailed-exitcode:
+    stage: pending
+  13-plan-out-file:
+    stage: pending
+  14-run-task-with-args:
+    stage: pending
+  15-node-npm-ensures:
+    stage: pending
+  16-go-module-management:
+    stage: pending
+  17-rust-cargo-management:
+    stage: pending
