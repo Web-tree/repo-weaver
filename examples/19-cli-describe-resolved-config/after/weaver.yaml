@@ -1,0 +1,17 @@
+version: "1"
+includes:
+  - "weaver.d/*.yaml"
+modules:
+  - name: "platform"
+    source: "../module"
+    ref: "v1"
+vars:
+  owner: "platform-team"
+  cost_center: "cc-1042"
+apps:
+  - name: "platform"
+    module: "platform"
+    path: "services/platform"
+    inputs:
+      owner: "{{ vars.owner }}"
+      cost_center: "{{ vars.cost_center }}"

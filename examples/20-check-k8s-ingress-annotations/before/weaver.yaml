@@ -1,0 +1,13 @@
+version: "1"
+modules:
+  - name: "k8s-policy"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "gateway"
+    module: "k8s-policy"
+    path: "."
+    inputs: {}
+    checks:
+      - name: "ingress-required-annotations"
+        run: "rg -n 'kubernetes\.io/ingress\.class|external-dns\.alpha\.kubernetes\.io/hostname|platform\.company\.io/owner' k8s/ingress.yaml"

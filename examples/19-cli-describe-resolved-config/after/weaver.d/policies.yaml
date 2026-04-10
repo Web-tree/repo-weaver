@@ -1,0 +1,8 @@
+apps:
+  - name: "platform"
+    vars:
+      environment: "staging"
+      owner: "platform-sre"
+    checks:
+      - name: "manifest-lint"
+        run: "test -f k8s/deployment.yaml"

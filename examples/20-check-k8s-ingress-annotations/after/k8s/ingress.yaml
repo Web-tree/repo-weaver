@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: payments-api
+  namespace: production
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    external-dns.alpha.kubernetes.io/hostname: payments.internal.example.com
+    platform.company.io/owner: payments-team
+spec:
+  rules:
+    - host: payments.internal.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: payments-api
+                port:
+                  number: 8080
