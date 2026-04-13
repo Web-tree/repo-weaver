@@ -1,0 +1,13 @@
+version: "1"
+modules:
+  - name: "tf-policy"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "compute"
+    module: "tf-policy"
+    path: "."
+    inputs: {}
+    checks:
+      - name: "ec2-mandatory-tags"
+        run: "rg -n 'Owner\s*=|Environment\s*=|CostCenter\s*=' infra/main.tf"

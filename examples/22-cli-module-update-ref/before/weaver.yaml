@@ -1,0 +1,10 @@
+version: "1"
+modules:
+  - name: "platform-standards"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "catalog"
+    module: "platform-standards"
+    path: "services/catalog"
+    inputs: {}

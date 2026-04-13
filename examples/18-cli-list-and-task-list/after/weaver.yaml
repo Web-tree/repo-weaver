@@ -1,0 +1,24 @@
+version: "1"
+modules:
+  - name: "platform-base"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "web"
+    module: "platform-base"
+    path: "services/web"
+    inputs: {}
+    tasks:
+      lint:
+        command: "echo linting web"
+      deploy:
+        command: "echo deploying web"
+  - name: "infra"
+    module: "platform-base"
+    path: "infra"
+    inputs: {}
+    tasks:
+      plan:
+        command: "echo planning infra"
+      apply:
+        command: "echo applying infra"
