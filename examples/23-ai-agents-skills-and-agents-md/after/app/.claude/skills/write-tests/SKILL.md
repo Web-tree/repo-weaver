@@ -1,0 +1,27 @@
+---
+name: write-tests
+description: Draft tests for changed code. Chooses the right test harness for acme-api and writes a focused test that exercises the change end-to-end.
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash
+---
+
+# write-tests
+
+Use this skill **after** a plan has been agreed and **before** implementing the change. Writing the test first anchors the diff.
+
+## When to use
+
+- A `plan-change` output exists and the change has been authorised.
+- The target code has at least one existing sibling test you can pattern-match against.
+
+## Procedure
+
+1. Find the nearest existing test file for the target code (`Glob`, `Grep`).
+2. Extract its conventions: naming, setup/teardown, assertion style.
+3. Write a **failing** test that expresses the desired new behaviour.
+4. Run the test and confirm it fails for the expected reason.
+5. Hand off to the implementer (or the next skill in the workflow).
+
+## Notes
+
+- Do not implement the production code yet — the test must fail first.
+- If no sibling tests exist, stop and escalate; ask the user where tests should live.

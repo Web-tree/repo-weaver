@@ -1,0 +1,20 @@
+{% set catalogue = {
+  "plan-change":  "Outline the intended change before editing any code.",
+  "write-tests":  "Draft a failing test that expresses the desired new behaviour.",
+  "review-diff":  "Critique the staged diff before it is committed."
+} %}
+The following skills are installed under `.claude/skills/` and are available to any Claude Code session in this repository:
+
+{% for skill in skills %}
+- **`{{ skill }}`** — {{ catalogue[skill] }}
+{% endfor %}
+
+### Invocation order
+
+When handling a feature request, non-trivial bug fix, or refactor in {{ project_name }}, invoke these skills in the following order:
+
+{% for step in workflow %}
+{{ loop.index }}. `{{ step }}`
+{% endfor %}
+
+Stop between steps and wait for user confirmation — each skill's job is to produce a short artefact (plan, failing test, review) that gates the next one. Skip steps only when the task is clearly small enough that a human would skip them too.

@@ -1,0 +1,73 @@
+version: "1"
+modules:
+  - name: "ai-agents"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "app-a"
+    module: "ai-agents"
+    path: "app-a"
+    inputs:
+      project_name: "app-a"
+      language: "TypeScript on Node 20"
+      conventions:
+        - "Small, reviewable PRs. Ship the smallest vertical slice that works."
+        - "Tests must fail before implementation lands."
+        - "No ad-hoc scripts in the repo root; put them in `scripts/`."
+      agents: ["claude", "cursor"]
+    ensures: &tool_ensures
+      - type: "ensure.file.from_template"
+        template: "AGENTS.md.j2"
+        dest: "AGENTS.md"
+      - type: "ensure.file.from_template"
+        template: "CLAUDE.md.j2"
+        dest: "CLAUDE.md"
+        when: '"claude" in inputs.agents'
+      - type: "ensure.file.from_template"
+        template: ".cursor/rules/project.mdc.j2"
+        dest: ".cursor/rules/project.mdc"
+        when: '"cursor" in inputs.agents'
+      - type: "ensure.file.from_template"
+        template: ".github/copilot-instructions.md.j2"
+        dest: ".github/copilot-instructions.md"
+        when: '"copilot" in inputs.agents'
+      - type: "ensure.file.from_template"
+        template: ".windsurfrules.j2"
+        dest: ".windsurfrules"
+        when: '"windsurf" in inputs.agents'
+      - type: "ensure.file.from_template"
+        template: "GEMINI.md.j2"
+        dest: "GEMINI.md"
+        when: '"gemini" in inputs.agents'
+      - type: "ensure.file.from_template"
+        template: "CONVENTIONS.md.j2"
+        dest: "CONVENTIONS.md"
+        when: '"aider" in inputs.agents'
+      - type: "ensure.file.from_template"
+        template: ".aider.conf.yml.j2"
+        dest: ".aider.conf.yml"
+        when: '"aider" in inputs.agents'
+
+  - name: "app-b"
+    module: "ai-agents"
+    path: "app-b"
+    inputs:
+      project_name: "app-b"
+      language: "Go 1.23"
+      conventions:
+        - "Errors are returned, never ignored — `_ = err` is a review-blocker."
+        - "Interfaces live with their consumers, not their implementers."
+        - "No `init()` functions; construct explicitly in `main`."
+      agents: ["copilot", "windsurf", "gemini", "aider"]
+    ensures: *tool_ensures
+
+  - name: "app-c"
+    module: "ai-agents"
+    path: "app-c"
+    inputs:
+      project_name: "app-c"
+      language: "Rust 1.92"
+      conventions:
+        - "Prefer `?` over `.unwrap()` outside of tests."
+        - "New dependencies require justification in the commit message."
+    ensures: *tool_ensures

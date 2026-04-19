@@ -1,0 +1,29 @@
+{% set subagent_catalogue = {
+  "test-runner":       "Runs the test suite in a clean subagent context and reports a short, actionable summary.",
+  "security-reviewer": "Read-only review of the staged diff for common security issues."
+} %}
+{% set command_catalogue = {
+  "release":   "Cut a release: bump version, tag, push.",
+  "sync-deps": "Resync dependencies against the lockfile and report drift."
+} %}
+Claude Code picks these up automatically from `.claude/agents/` and `.claude/commands/`. Other agents should be instructed to delegate to them or call them by the equivalent manual step.
+
+### Subagents
+
+{% if subagents %}
+{% for s in subagents %}
+- **`{{ s }}`** — {{ subagent_catalogue[s] }}
+{% endfor %}
+{% else %}
+_No subagents installed._
+{% endif %}
+
+### Slash commands
+
+{% if commands %}
+{% for c in commands %}
+- **`/{{ c }}`** — {{ command_catalogue[c] }}
+{% endfor %}
+{% else %}
+_No slash commands installed._
+{% endif %}

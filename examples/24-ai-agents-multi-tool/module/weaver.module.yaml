@@ -1,0 +1,17 @@
+inputs:
+  project_name:
+    type: string
+    required: true
+    description: "Project name, rendered into every generated file."
+  language:
+    type: string
+    required: true
+    description: "Primary language / runtime (e.g. 'TypeScript on Node 20')."
+  conventions:
+    type: "list(string)"
+    required: true
+    description: "Shared coding conventions. Rendered verbatim into every selected tool's config."
+  agents:
+    type: "list(string)"
+    default: ["claude", "cursor", "copilot"]
+    description: "Which agent configs to generate. Any subset of: claude, cursor, copilot, windsurf, gemini, aider. AGENTS.md is always generated (universal fallback)."

@@ -1,0 +1,18 @@
+---
+description: {{ project_name }} project conventions. Applied to every file.
+alwaysApply: true
+globs:
+  - "**/*"
+---
+
+# {{ project_name }}
+
+{{ language }}.
+
+Shared conventions live in `AGENTS.md`. This file restates them for Cursor and should not diverge.
+
+## Conventions
+
+{% for c in conventions %}
+- {{ c }}
+{% endfor %}

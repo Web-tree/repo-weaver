@@ -1,0 +1,17 @@
+inputs:
+  project_name:
+    type: string
+    required: true
+    description: "Name of the project (used in AGENTS.md narrative)."
+  skills:
+    type: "list(string)"
+    default: ["plan-change", "review-diff", "write-tests"]
+    description: "Which skills to install under .claude/skills/. Catalogue: plan-change, review-diff, write-tests."
+  workflow:
+    type: "list(string)"
+    default: ["plan-change", "write-tests", "review-diff"]
+    description: "The order in which agents should invoke the installed skills. Rendered as a numbered list in AGENTS.md."
+  recent_changes:
+    type: "list(string)"
+    default: []
+    description: "Short bullet list of recent noteworthy changes; rendered into a marker-delimited region of AGENTS.md so it can sit anywhere."
