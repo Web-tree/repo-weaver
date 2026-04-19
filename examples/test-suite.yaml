@@ -46,3 +46,6 @@ examples:
     stage: pending
   17-rust-cargo-management:
     stage: pending
+  30-init-workspace:
+    stage: implemented
+    args: ["init"]
