@@ -1,0 +1,18 @@
+---
+description: app-a project conventions. Applied to every file.
+alwaysApply: true
+globs:
+  - "**/*"
+---
+
+# app-a
+
+TypeScript on Node 20.
+
+Shared conventions live in `AGENTS.md`. This file restates them for Cursor and should not diverge.
+
+## Conventions
+
+- Small, reviewable PRs. Ship the smallest vertical slice that works.
+- Tests must fail before implementation lands.
+- No ad-hoc scripts in the repo root; put them in `scripts/`.

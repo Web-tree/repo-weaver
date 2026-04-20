@@ -1,0 +1,37 @@
+---
+name: review-diff
+description: Critique the staged diff before it is committed. Flags scope creep, missing tests, unsafe changes, and opportunities to simplify.
+allowed-tools: Bash, Read, Grep
+---
+
+# review-diff
+
+Use this skill as the **last** step before committing changes in {{ project_name }}.
+
+## When to use
+
+- Implementation is complete.
+- Tests pass locally.
+- You are about to write the commit message.
+
+## Procedure
+
+1. `git diff --staged` — read the full staged diff.
+2. For each hunk, ask:
+   - Is this in scope for the stated task? If not, flag it.
+   - Does the change have a test covering it?
+   - Are there any unintentional changes (whitespace, unrelated imports, stray debug prints)?
+   - Could this be simpler (fewer lines, less abstraction, clearer names)?
+3. Produce a short review with one of three verdicts: **ship**, **revise** (with a list of fixes), or **split** (the diff should be multiple commits).
+
+## Output shape
+
+```
+## Review
+
+Verdict: ship | revise | split
+
+Findings:
+- <finding 1>
+- ...
+```

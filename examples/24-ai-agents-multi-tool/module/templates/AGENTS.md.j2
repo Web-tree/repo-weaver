@@ -1,0 +1,23 @@
+# {{ project_name }}
+
+{{ language }}.
+
+This repository follows the [AGENTS.md open standard](https://agents.md/) — every agent that reads it (Claude Code, Cursor, Codex CLI, GitHub Copilot, Gemini CLI, Aider, Windsurf, and others) should respect the conventions below.
+
+## Conventions
+
+{% for c in conventions %}
+- {{ c }}
+{% endfor %}
+
+## Tool-specific configs
+
+The following tool-specific files are generated from the same source of truth and must not diverge from this file's conventions:
+
+{% if "claude"   in agents %}- `CLAUDE.md` — Claude Code
+{% endif %}{% if "cursor"   in agents %}- `.cursor/rules/project.mdc` — Cursor
+{% endif %}{% if "copilot"  in agents %}- `.github/copilot-instructions.md` — GitHub Copilot
+{% endif %}{% if "windsurf" in agents %}- `.windsurfrules` — Windsurf
+{% endif %}{% if "gemini"   in agents %}- `GEMINI.md` — Gemini CLI
+{% endif %}{% if "aider"    in agents %}- `CONVENTIONS.md` + `.aider.conf.yml` — Aider
+{% endif %}

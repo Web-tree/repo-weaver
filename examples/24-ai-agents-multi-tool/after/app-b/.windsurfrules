@@ -1,0 +1,11 @@
+# app-b — Windsurf rules
+
+Go 1.23.
+
+Shared conventions live in `AGENTS.md`. Windsurf applies this file at the repository level.
+
+## Conventions
+
+- Errors are returned, never ignored — `_ = err` is a review-blocker.
+- Interfaces live with their consumers, not their implementers.
+- No `init()` functions; construct explicitly in `main`.

@@ -1,0 +1,11 @@
+# {{ project_name }} — Conventions (Aider)
+
+{{ language }}.
+
+Aider loads this file automatically when `.aider.conf.yml` contains `read: CONVENTIONS.md`. Shared conventions live in `AGENTS.md` — this file restates them so the two stay in sync.
+
+## Conventions
+
+{% for c in conventions %}
+- {{ c }}
+{% endfor %}

@@ -1,0 +1,69 @@
+version: "1"
+modules:
+  - name: "ai-agents"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "app-a"
+    module: "ai-agents"
+    path: "app-a"
+    inputs:
+      project_name: "app-a"
+      subagents: ["test-runner"]
+      commands: ["release"]
+    ensures:
+      - type: "ensure.file.from_template"
+        template: ".claude/agents/test-runner.md.j2"
+        dest: ".claude/agents/test-runner.md"
+        when: '"test-runner" in inputs.subagents'
+      - type: "ensure.file.from_template"
+        template: ".claude/agents/security-reviewer.md.j2"
+        dest: ".claude/agents/security-reviewer.md"
+        when: '"security-reviewer" in inputs.subagents'
+      - type: "ensure.file.from_template"
+        template: ".claude/commands/release.md.j2"
+        dest: ".claude/commands/release.md"
+        when: '"release" in inputs.commands'
+      - type: "ensure.file.from_template"
+        template: ".claude/commands/sync-deps.md.j2"
+        dest: ".claude/commands/sync-deps.md"
+        when: '"sync-deps" in inputs.commands'
+      - type: "ensure.file.md_section"
+        file: "AGENTS.md"
+        selector:
+          type: "heading"
+          path: ["Automation"]
+          depth: 2
+        content_from_template: "sections/automation.md.j2"
+
+  - name: "app-b"
+    module: "ai-agents"
+    path: "app-b"
+    inputs:
+      project_name: "app-b"
+      subagents: ["test-runner", "security-reviewer"]
+      commands: ["release", "sync-deps"]
+    ensures:
+      - type: "ensure.file.from_template"
+        template: ".claude/agents/test-runner.md.j2"
+        dest: ".claude/agents/test-runner.md"
+        when: '"test-runner" in inputs.subagents'
+      - type: "ensure.file.from_template"
+        template: ".claude/agents/security-reviewer.md.j2"
+        dest: ".claude/agents/security-reviewer.md"
+        when: '"security-reviewer" in inputs.subagents'
+      - type: "ensure.file.from_template"
+        template: ".claude/commands/release.md.j2"
+        dest: ".claude/commands/release.md"
+        when: '"release" in inputs.commands'
+      - type: "ensure.file.from_template"
+        template: ".claude/commands/sync-deps.md.j2"
+        dest: ".claude/commands/sync-deps.md"
+        when: '"sync-deps" in inputs.commands'
+      - type: "ensure.file.md_section"
+        file: "AGENTS.md"
+        selector:
+          type: "heading"
+          path: ["Automation"]
+          depth: 2
+        content_from_template: "sections/automation.md.j2"

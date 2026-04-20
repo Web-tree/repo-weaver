@@ -1,0 +1,17 @@
+---
+description: app-c project conventions. Applied to every file.
+alwaysApply: true
+globs:
+  - "**/*"
+---
+
+# app-c
+
+Rust 1.92.
+
+Shared conventions live in `AGENTS.md`. This file restates them for Cursor and should not diverge.
+
+## Conventions
+
+- Prefer `?` over `.unwrap()` outside of tests.
+- New dependencies require justification in the commit message.

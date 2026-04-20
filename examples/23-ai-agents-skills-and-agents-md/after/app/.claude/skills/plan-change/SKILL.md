@@ -1,0 +1,41 @@
+---
+name: plan-change
+description: Outline the intended change before editing any code. Produces a short plan listing files to touch, the order of edits, and the tests that will prove the change works.
+allowed-tools: Read, Grep, Glob
+---
+
+# plan-change
+
+Use this skill at the **start** of any non-trivial coding task in acme-api.
+
+## When to use
+
+- The user has described a feature, bug fix, or refactor that touches more than one file.
+- You need to ground your intended edits in the actual shape of the codebase before writing them.
+
+## Procedure
+
+1. Restate the goal in one sentence.
+2. List the files you intend to read or edit, with a one-line reason for each.
+3. Sketch the diffs at a high level (do not write them yet).
+4. Name the tests or checks that will prove the change is correct.
+5. Stop. Wait for user confirmation before moving on to implementation.
+
+## Output shape
+
+```
+## Plan
+
+Goal: <one sentence>
+
+Files:
+- path/to/file.rs — <why>
+- ...
+
+Approach:
+1. <step>
+2. ...
+
+Verification:
+- <test or check>
+```

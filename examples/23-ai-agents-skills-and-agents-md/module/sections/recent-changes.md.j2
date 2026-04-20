@@ -1,0 +1,7 @@
+{% if recent_changes %}
+{% for change in recent_changes %}
+- {{ change }}
+{% endfor %}
+{% else %}
+_No recent changes recorded._
+{% endif %}

@@ -1,0 +1,11 @@
+# {{ project_name }} — Gemini CLI context
+
+{{ language }}.
+
+Shared conventions live in `AGENTS.md`. Gemini CLI loads `GEMINI.md` files hierarchically as context; adjust `.gemini/settings.json` if you want a different filename.
+
+## Conventions
+
+{% for c in conventions %}
+- {{ c }}
+{% endfor %}

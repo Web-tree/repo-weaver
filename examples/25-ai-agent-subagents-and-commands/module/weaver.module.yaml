@@ -1,0 +1,13 @@
+inputs:
+  project_name:
+    type: string
+    required: true
+    description: "Project name, rendered into subagent and command files."
+  subagents:
+    type: "list(string)"
+    default: ["test-runner"]
+    description: "Which subagents to install under .claude/agents/. Catalogue: test-runner, security-reviewer."
+  commands:
+    type: "list(string)"
+    default: ["release"]
+    description: "Which slash commands to install under .claude/commands/. Catalogue: release, sync-deps."

@@ -270,6 +270,10 @@ AI:
 
 * ensure.ai.patch (unified diff, apply, verify, rollback)
 
+Markdown (partial updates):
+
+* ensure.file.md_section (manage a named region of a Markdown file via a pluggable `selector`: `heading` path or `block_marker` id in v1; reserved: `mdast`, `mdq`, `regex`, `frontmatter`, `line_range`). Converges only the selected region; all other content in the file is preserved and drift-detected independently.
+
 All ensures must have:
 
 * plan capability: show what would change

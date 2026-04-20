@@ -1,0 +1,50 @@
+version: "1"
+modules:
+  - name: "ai-agents"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "app"
+    module: "ai-agents"
+    path: "app"
+    inputs:
+      project_name: "acme-api"
+      skills: ["plan-change", "write-tests", "review-diff"]
+      workflow: ["plan-change", "write-tests", "review-diff"]
+      recent_changes:
+        - "Switched request validation from ad-hoc checks to zod schemas."
+        - "Added a nightly integration job against the staging database."
+    ensures:
+      # Whole-file skills — ordinary template rendering.
+      - type: "ensure.file.from_template"
+        template: ".claude/skills/plan-change/SKILL.md.j2"
+        dest: ".claude/skills/plan-change/SKILL.md"
+      - type: "ensure.file.from_template"
+        template: ".claude/skills/write-tests/SKILL.md.j2"
+        dest: ".claude/skills/write-tests/SKILL.md"
+      - type: "ensure.file.from_template"
+        template: ".claude/skills/review-diff/SKILL.md.j2"
+        dest: ".claude/skills/review-diff/SKILL.md"
+
+      # Managed region of an existing file — heading selector.
+      # Injects/updates the `## Skills` section without touching anything else
+      # in AGENTS.md (including the pre-existing `# acme-api` intro and the
+      # `## Manual Additions` block below it).
+      - type: "ensure.file.md_section"
+        file: "AGENTS.md"
+        selector:
+          type: "heading"
+          path: ["Skills"]
+          depth: 2
+        content_from_template: "sections/skills.md.j2"
+
+      # Managed region of the same file — block-marker selector.
+      # Volatile content (recent changes) that doesn't need its own heading;
+      # the marker lets it sit anywhere in the file without disrupting
+      # heading structure.
+      - type: "ensure.file.md_section"
+        file: "AGENTS.md"
+        selector:
+          type: "block_marker"
+          id: "recent-changes"
+        content_from_template: "sections/recent-changes.md.j2"
