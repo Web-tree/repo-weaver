@@ -1,0 +1,44 @@
+version: "1"
+
+# `check.content_scan` is a new check (pending implementation).
+# It runs after module fetch / before any ensure writes, so malicious content
+# never reaches the working tree.
+apps:
+  - name: "app-clean"
+    path: "app-clean"
+    inputs:
+      project_name: "app-clean"
+      source: "fixtures/clean-skill.md"
+    checks:
+      - type: "check.content_scan"
+        rules:
+          - "unicode_bidi"
+          - "unicode_invisible"
+          - "homoglyphs"
+        targets:
+          - "fixtures/clean-skill.md"
+        fail_on: ["error"]
+    ensures:
+      - type: "ensure.file.copy"
+        src: "fixtures/clean-skill.md"
+        dest: ".claude/skills/example/SKILL.md"
+
+  - name: "app-malicious"
+    path: "app-malicious"
+    inputs:
+      project_name: "app-malicious"
+      source: "fixtures/malicious-skill.md"
+    checks:
+      - type: "check.content_scan"
+        rules:
+          - "unicode_bidi"
+          - "unicode_invisible"
+          - "homoglyphs"
+        targets:
+          - "fixtures/malicious-skill.md"
+        fail_on: ["error"]
+    ensures:
+      # This ensure must NEVER execute — the check above must abort apply first.
+      - type: "ensure.file.copy"
+        src: "fixtures/malicious-skill.md"
+        dest: ".claude/skills/example/SKILL.md"

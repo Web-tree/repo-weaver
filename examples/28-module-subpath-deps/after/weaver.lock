@@ -1,0 +1,18 @@
+version: "1"
+modules:
+  "https://github.com/anthropics/skills":
+    ref: "v1.2.0"
+    checksum: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    # New: per-file checksums for files matched by `paths:`.
+    # Only files under `skills/frontend-design/**` are present — the rest of
+    # the upstream repo is intentionally not fetched.
+    files:
+      "skills/frontend-design/SKILL.md": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      "skills/frontend-design/examples/button.tsx": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      "skills/frontend-design/examples/form.tsx": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+
+  "https://github.com/github/awesome-copilot":
+    ref: "main"
+    checksum: "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+    files:
+      "agents/api-architect.agent.md": "sha256:5555555555555555555555555555555555555555555555555555555555555555"

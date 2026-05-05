@@ -1,0 +1,33 @@
+version: "1"
+
+# `modules[*].paths` is a new field (pending implementation) that restricts
+# which files the resolver materialises from the upstream repo.
+# Omitting `paths:` keeps the existing "whole repo" behaviour — backwards compatible.
+modules:
+  - name: "frontend-skill"
+    source: "https://github.com/anthropics/skills"
+    ref: "v1.2.0"
+    paths:
+      - "skills/frontend-design/**"
+
+  - name: "api-architect"
+    source: "https://github.com/github/awesome-copilot"
+    ref: "main"
+    paths:
+      - "agents/api-architect.agent.md"
+
+apps:
+  - name: "app"
+    path: "app"
+    inputs:
+      project_name: "app"
+    ensures:
+      - type: "ensure.file.from_module"
+        module: "frontend-skill"
+        src: "skills/frontend-design/SKILL.md"
+        dest: ".claude/skills/frontend-design/SKILL.md"
+
+      - type: "ensure.file.from_module"
+        module: "api-architect"
+        src: "agents/api-architect.agent.md"
+        dest: ".claude/agents/api-architect.md"
