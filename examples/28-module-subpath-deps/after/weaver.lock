@@ -1,6 +1,10 @@
 version: "1"
+# Modules are keyed by `name` (matches `weaver.yaml`), not by source URL —
+# so two modules pointing at the same upstream repo with different `ref`s
+# or `paths` can coexist without colliding.
 modules:
-  "https://github.com/anthropics/skills":
+  "frontend-skill":
+    source: "https://github.com/anthropics/skills"
     ref: "v1.2.0"
     checksum: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
     # New: per-file checksums for files matched by `paths:`.
@@ -11,7 +15,8 @@ modules:
       "skills/frontend-design/examples/button.tsx": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
       "skills/frontend-design/examples/form.tsx": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
 
-  "https://github.com/github/awesome-copilot":
+  "api-architect":
+    source: "https://github.com/github/awesome-copilot"
     ref: "main"
     checksum: "sha256:4444444444444444444444444444444444444444444444444444444444444444"
     files:

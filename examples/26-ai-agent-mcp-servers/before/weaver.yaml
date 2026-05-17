@@ -19,7 +19,7 @@ apps:
     inputs:
       project_name: "app-a"
       tools: ["claude", "cursor"]
-    ensures: &mcp_ensures
+    ensures:
       - type: "ensure.mcp.server"
         name: "github"
         transport: "http"
@@ -41,4 +41,20 @@ apps:
     inputs:
       project_name: "app-b"
       tools: ["claude"]
-    ensures: *mcp_ensures
+    # `targets:` is scoped to this app's `inputs.tools` — cursor omitted here,
+    # so app-b only gets the claude-side files.
+    ensures:
+      - type: "ensure.mcp.server"
+        name: "github"
+        transport: "http"
+        url: "https://api.githubcopilot.com/mcp"
+        headers:
+          Authorization: "Bearer ${{ secrets.GITHUB_PAT }}"
+        targets: ["claude"]
+
+      - type: "ensure.mcp.server"
+        name: "filesystem"
+        transport: "stdio"
+        command: "npx"
+        args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+        targets: ["claude"]
