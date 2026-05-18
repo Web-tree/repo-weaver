@@ -1,0 +1,12 @@
+inputs:
+  project_name:
+    type: string
+    required: true
+  enable_secret_redaction:
+    type: bool
+    default: true
+    description: "Install a PreToolUse hook on Bash that redacts secrets before tool input is sent."
+  enable_session_banner:
+    type: bool
+    default: false
+    description: "Install a SessionStart hook printing a one-line repo banner."

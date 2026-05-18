@@ -1,0 +1,7 @@
+{
+  "model": "claude-opus-4-7",
+  "permissions": {
+    "allow": ["Bash(git status)", "Read(**)"],
+    "deny": ["Bash(rm -rf *)"]
+  }
+}

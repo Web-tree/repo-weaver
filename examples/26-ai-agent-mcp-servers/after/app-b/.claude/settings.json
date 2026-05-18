@@ -1,0 +1,21 @@
+{
+  "model": "claude-opus-4-7",
+  "permissions": {
+    "allow": ["Bash(git status)", "Read(**)"],
+    "deny": ["Bash(rm -rf *)"]
+  },
+  "mcpServers": {
+    "github": {
+      "transport": "http",
+      "url": "https://api.githubcopilot.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PAT}"
+      }
+    },
+    "filesystem": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+    }
+  }
+}

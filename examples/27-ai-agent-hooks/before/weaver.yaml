@@ -1,0 +1,37 @@
+version: "1"
+modules:
+  - name: "ai-hooks"
+    source: "../module"
+    ref: "v1"
+
+# `ensure.hook` is a new primitive (pending implementation).
+# It shares the JSON-merge engine with `ensure.mcp.server` (example 26):
+# both insert into `.claude/settings.json` without clobbering unrelated keys.
+apps:
+  - name: "app"
+    module: "ai-hooks"
+    path: "app"
+    inputs:
+      project_name: "app"
+      enable_secret_redaction: true
+      enable_session_banner: true
+    ensures:
+      - type: "ensure.file.from_template"
+        template: "scripts/redact-secrets.sh.j2"
+        dest: "scripts/redact-secrets.sh"
+        mode: "0755"
+        when: "inputs.enable_secret_redaction"
+
+      - type: "ensure.hook"
+        event: "PreToolUse"
+        matcher: "Bash"
+        command: "./scripts/redact-secrets.sh"
+        timeout: 5
+        targets: ["claude"]
+        when: "inputs.enable_secret_redaction"
+
+      - type: "ensure.hook"
+        event: "SessionStart"
+        command: "echo 'repo-weaver-managed repo — run `rw plan` before editing'"
+        targets: ["claude"]
+        when: "inputs.enable_session_banner"

@@ -1,0 +1,22 @@
+version: "1"
+# Modules are keyed by `name` (matches `weaver.yaml`), not by source URL —
+# so two modules pointing at the same upstream repo with different `ref`s
+# or `paths` can coexist without colliding.
+modules:
+  "frontend-skill":
+    source: "https://github.com/anthropics/skills"
+    ref: "v1.2.0"
+    # Per-file checksums for files matched by `paths:`.
+    # Only files under `skills/frontend-design/**` are present — the rest of
+    # the upstream repo is intentionally not fetched. Modules with `paths:`
+    # use this `files:` map in place of the legacy single `checksum:` field.
+    files:
+      "skills/frontend-design/SKILL.md": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      "skills/frontend-design/examples/button.tsx": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      "skills/frontend-design/examples/form.tsx": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+
+  "api-architect":
+    source: "https://github.com/github/awesome-copilot"
+    ref: "main"
+    files:
+      "agents/api-architect.agent.md": "sha256:5555555555555555555555555555555555555555555555555555555555555555"

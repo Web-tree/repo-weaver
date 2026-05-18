@@ -1,0 +1,60 @@
+version: "1"
+modules:
+  - name: "ai-mcp"
+    source: "../module"
+    ref: "v1"
+
+secrets:
+  GITHUB_PAT:
+    provider: env
+    key: GITHUB_PAT
+
+# `ensure.mcp.server` is a new primitive (pending implementation).
+# `targets:` is the same selector pattern as example 24's `when:` —
+# it picks which client config files receive the entry.
+apps:
+  - name: "app-a"
+    module: "ai-mcp"
+    path: "app-a"
+    inputs:
+      project_name: "app-a"
+      tools: ["claude", "cursor"]
+    ensures:
+      - type: "ensure.mcp.server"
+        name: "github"
+        transport: "http"
+        url: "https://api.githubcopilot.com/mcp"
+        headers:
+          Authorization: "Bearer ${{ secrets.GITHUB_PAT }}"
+        targets: ["claude", "cursor"]
+
+      - type: "ensure.mcp.server"
+        name: "filesystem"
+        transport: "stdio"
+        command: "npx"
+        args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+        targets: ["claude", "cursor"]
+
+  - name: "app-b"
+    module: "ai-mcp"
+    path: "app-b"
+    inputs:
+      project_name: "app-b"
+      tools: ["claude"]
+    # `targets:` is scoped to this app's `inputs.tools` — cursor omitted here,
+    # so app-b only gets the claude-side files.
+    ensures:
+      - type: "ensure.mcp.server"
+        name: "github"
+        transport: "http"
+        url: "https://api.githubcopilot.com/mcp"
+        headers:
+          Authorization: "Bearer ${{ secrets.GITHUB_PAT }}"
+        targets: ["claude"]
+
+      - type: "ensure.mcp.server"
+        name: "filesystem"
+        transport: "stdio"
+        command: "npx"
+        args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+        targets: ["claude"]

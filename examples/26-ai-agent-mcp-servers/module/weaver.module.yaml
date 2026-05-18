@@ -1,0 +1,8 @@
+inputs:
+  project_name:
+    type: string
+    required: true
+  tools:
+    type: "list(string)"
+    default: ["claude"]
+    description: "Which clients receive MCP config. Subset of: claude, cursor."
