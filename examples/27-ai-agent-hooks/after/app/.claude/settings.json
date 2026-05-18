@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'repo-weaver-managed repo — see AGENTS.md'"
+            "command": "echo 'repo-weaver-managed repo — run `rw plan` before editing'"
           }
         ]
       }

@@ -10,7 +10,7 @@ Demonstrates how to depend on **specific files inside a multi-asset upstream rep
 - Module fetcher (`crates/core/src/module.rs`) materialises only matching paths under `~/.rw/store/<source>/<ref>/`, leaving the rest unfetched.
 - `weaver.lock` (`crates/core/src/lockfile.rs`) records ref **plus per-file `sha256` hashes** for every materialised path. Drift on any one file is detectable independently of the others.
 - Backwards compatible: omitting `paths:` keeps today's whole-repo behaviour.
-- Composes with existing ensures — e.g. `ensure.file.from_template` referencing `{{ module_path }}/skills/frontend-design/SKILL.md` still works because the file is on disk.
+- Composes with existing ensures — e.g. `ensure.file.from_module` referencing `skills/frontend-design/SKILL.md` still works because the file is on disk under the module's store path.
 
 ## Why a sub-path selector
 
@@ -59,7 +59,9 @@ modules:
     files:
       "skills/frontend-design/SKILL.md":
         sha256: "<hex>"
-      "skills/frontend-design/templates/component.tsx.j2":
+      "skills/frontend-design/examples/button.tsx":
+        sha256: "<hex>"
+      "skills/frontend-design/examples/form.tsx":
         sha256: "<hex>"
   api-architect:
     source: https://github.com/github/awesome-copilot

@@ -6,9 +6,6 @@ version: "1"
 apps:
   - name: "app-clean"
     path: "app-clean"
-    inputs:
-      project_name: "app-clean"
-      source: "fixtures/clean-skill.md"
     checks:
       - type: "check.content_scan"
         rules:
@@ -25,9 +22,6 @@ apps:
 
   - name: "app-malicious"
     path: "app-malicious"
-    inputs:
-      project_name: "app-malicious"
-      source: "fixtures/malicious-skill.md"
     checks:
       - type: "check.content_scan"
         rules:

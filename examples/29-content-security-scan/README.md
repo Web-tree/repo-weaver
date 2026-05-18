@@ -6,7 +6,11 @@ Demonstrates how to **block hostile module content** (Unicode bidi/invisible-cha
 
 ## What this covers
 
-- A new check: `check.content_scan` with fields `rules` (`list(string)`), `targets` (glob list, default = "all module-supplied content"), `fail_on` (`list(string)`, e.g. `[error]`).
+- A new check: `check.content_scan` with fields:
+  - `rules` (`list(string)`) — which rule kinds to run.
+  - `targets` (glob list, repo-relative; default = all module-supplied content).
+  - `fail_on` (`list(string)`, e.g. `[error]`).
+  - `allow_codepoints` (`list(string)`, optional) — explicit whitelist of codepoints (e.g. `["U+202E"]`) for legitimate uses.
 - Rule kinds (v1):
   - `unicode_bidi` — flags U+202A..U+202E and U+2066..U+2069 (the "Trojan Source" range).
   - `unicode_invisible` — flags zero-width chars (U+200B..U+200D, U+FEFF), tag chars (U+E0000..U+E007F), and other non-printing control chars outside whitelisted ranges.
@@ -40,13 +44,13 @@ rw apply
 
 - `app-clean/.claude/skills/example/SKILL.md` is rendered successfully.
 - `app-malicious/.claude/skills/example/SKILL.md` is **not** written.
-- `rw apply` exits non-zero with a message like:
+- `rw apply` exits with code 3 (EC-003) and stderr matches `after/expected-stderr.txt`:
 
 ```
 error: check.content_scan failed for app=app-malicious
   rule: unicode_bidi
   file: fixtures/malicious-skill.md
-  line: 5, column: 14
+  line: 9, column: 30
   finding: codepoint U+202E (RIGHT-TO-LEFT OVERRIDE)
   hint: see https://trojansource.codes/ — remove the character or whitelist it explicitly via `allow_codepoints:`
 ```

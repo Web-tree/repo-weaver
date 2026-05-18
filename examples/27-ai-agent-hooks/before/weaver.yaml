@@ -32,6 +32,6 @@ apps:
 
       - type: "ensure.hook"
         event: "SessionStart"
-        command: "echo 'repo-weaver-managed repo — see AGENTS.md'"
+        command: "echo 'repo-weaver-managed repo — run `rw plan` before editing'"
         targets: ["claude"]
         when: "inputs.enable_session_banner"

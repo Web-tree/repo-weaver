@@ -6,11 +6,18 @@ Demonstrates how a module declares **Claude Code hooks** (`PreToolUse`, `PostToo
 
 ## What this covers
 
-- A new ensure: `ensure.hook` with fields `event`, `matcher` (optional, regex on tool name), `command`, `timeout` (optional), `targets`.
+- A new ensure: `ensure.hook` with fields `event`, `matcher` (optional; semantics depend on `event` — see below), `command`, `timeout` (optional), `targets`.
 - **Same JSON-merge guarantee as example 26**: pre-existing `permissions`, `model`, `mcpServers`, etc. are preserved byte-for-byte; only the `hooks` block is managed.
 - Idempotency: re-applying a hook with the same `event` + `matcher` + `command` is a no-op (no duplicate entries).
-- Cross-tool fallback: when `targets:` includes a client without native hooks (e.g. `cursor`), the engine writes a Markdown note into the corresponding rules file describing the equivalent constraint, so the user sees what's missing instead of silently dropping it.
 - Modules can ship the hook command itself as a template (`scripts/redact-secrets.sh.j2`) — same `ensure.file.from_template` we already use.
+
+### `matcher` semantics by event
+
+| Event | `matcher` meaning |
+|---|---|
+| `PreToolUse`, `PostToolUse` | Regex on tool name (e.g. `Bash`, `Read`). |
+| `SessionStart` | Source string: `startup` / `resume` / `clear` / `compact`. Omit to match all. |
+| `Stop`, `Notification`, `SubagentStop`, `PreCompact`, `UserPromptSubmit` | Not applicable; omit. |
 
 ## Why a dedicated primitive
 

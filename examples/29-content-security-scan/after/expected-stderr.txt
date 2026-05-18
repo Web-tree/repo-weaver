@@ -1,7 +1,7 @@
 error: check.content_scan failed for app=app-malicious
   rule: unicode_bidi
   file: fixtures/malicious-skill.md
-  line: 9, column: 26
+  line: 9, column: 30
   finding: codepoint U+202E (RIGHT-TO-LEFT OVERRIDE)
   hint: see https://trojansource.codes/ — remove the character or whitelist it explicitly via `allow_codepoints:`
 

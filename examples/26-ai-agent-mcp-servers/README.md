@@ -8,6 +8,8 @@ Demonstrates how a module declares **MCP (Model Context Protocol) servers** and 
 
 - A new ensure: `ensure.mcp.server` with fields `name`, `transport` (`http` | `stdio`), `url` / `command` / `args`, `headers`, `env`, `targets`.
 - Multi-target rendering: a single declaration lands in `.mcp.json`, `.claude/settings.json` (`mcpServers` key), and `.cursor/mcp.json` — chosen by `targets:`.
+  - `targets: ["claude"]` writes both `.mcp.json` (project-scoped, shared across Claude clients) and `.claude/settings.json` (user-scoped).
+  - `targets: ["cursor"]` writes `.cursor/mcp.json`.
 - **Merge, don't overwrite:** existing unrelated keys in `settings.json` (e.g. `permissions`, `model`) are preserved. Only the `mcpServers` block is managed.
 - Secret references via `${{ secrets.* }}` — same resolver as the existing `secrets:` block (no plaintext in `weaver.yaml`).
 - Re-uses the `when:`/`targets:` selector pattern from example 24 — "selecting tools = selecting which files to sync".
@@ -31,7 +33,12 @@ This example brings the same capability into repo-weaver while keeping the `ensu
 
 ## Module contents
 
-- `weaver.module.yaml` — inputs: `project_name`, `tools` (`list(string)`), `github_pat` (secret ref).
+- `weaver.module.yaml` — inputs: `project_name` (string), `tools` (`list(string)`, subset of `claude`/`cursor`).
+- Secret: `GITHUB_PAT` is sourced from the top-level `secrets:` block in `weaver.yaml`, not as a module input. The ensure references it via `${{ secrets.GITHUB_PAT }}` and the rendered files emit a literal `${GITHUB_PAT}` (resolved at process spawn by the MCP client, never written as plaintext).
+
+## targets vs inputs.tools
+
+`inputs.tools` is informational — it documents which clients the app supports. The authoritative selector is `targets:` on each ensure. In this example app-b sets `tools: ["claude"]` and accordingly each ensure has `targets: ["claude"]`. The engine does not auto-intersect; mismatched declarations are the caller's responsibility.
 
 ## Two apps in one config
 
