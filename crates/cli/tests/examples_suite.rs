@@ -83,8 +83,19 @@ fn examples_apply_snapshot_suite() {
         let settings = merged_settings(&cfg, &name);
         let result = run_example(&example_dir, &settings);
 
-        if settings.stage == Stage::Implemented && !result.ok {
-            failures.push(format!("{name}: {}", result.details.join("; ")));
+        match (settings.stage, result.ok) {
+            (Stage::Implemented, false) => {
+                failures.push(format!(
+                    "{name} [implemented regressed]: {}",
+                    result.details.join("; ")
+                ));
+            }
+            (Stage::Pending, true) => {
+                failures.push(format!(
+                    "{name} [pending but passes — promote to `stage: implemented`]"
+                ));
+            }
+            _ => {}
         }
         results.push(result);
     }
@@ -93,7 +104,7 @@ fn examples_apply_snapshot_suite() {
 
     if !failures.is_empty() {
         panic!(
-            "Implemented examples regressed:\n{}",
+            "Stage mismatches detected:\n{}",
             failures
                 .into_iter()
                 .map(|line| format!("- {line}"))
