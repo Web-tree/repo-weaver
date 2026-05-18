@@ -9,13 +9,13 @@ examples:
   01-basic-static-files:
     stage: pending
   02-template-rendering:
-    stage: pending
+    stage: implemented
   03-mixed-files-and-templates:
-    stage: pending
+    stage: implemented
   04-multiple-apps:
-    stage: pending
+    stage: implemented
   05-nested-folders:
-    stage: pending
+    stage: implemented
   06-config-includes:
     stage: pending
   07-multiple-modules:
@@ -33,7 +33,7 @@ examples:
   13-plan-out-file:
     stage: pending
   14-run-task-with-args:
-    stage: pending
+    stage: implemented
   15-node-npm-ensures:
     stage: pending
   16-go-module-management:
