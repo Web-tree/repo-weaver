@@ -13,10 +13,28 @@ fn validate_input_type(
     value: &serde_yml::Value,
     expected_type: &str,
 ) -> anyhow::Result<()> {
+    // Compound types: list(<element-type>) — e.g. list(string)
+    if let Some(elem_type) = parse_list_type(expected_type) {
+        let Some(seq) = value.as_sequence() else {
+            anyhow::bail!(
+                "Input '{}': expected type '{}', got {:?}",
+                key,
+                expected_type,
+                value
+            );
+        };
+        for (idx, item) in seq.iter().enumerate() {
+            validate_input_type(&format!("{key}[{idx}]"), item, elem_type)?;
+        }
+        return Ok(());
+    }
+
     let ok = match expected_type {
         "string" => value.is_string(),
         "number" => value.is_number(),
         "bool" => value.is_bool(),
+        "list" => value.is_sequence(),
+        "map" => value.is_mapping(),
         other => anyhow::bail!("Unknown input type '{}' for key '{}'", other, key),
     };
     if !ok {
@@ -28,6 +46,12 @@ fn validate_input_type(
         );
     }
     Ok(())
+}
+
+/// Parse `list(<T>)` and return the inner element type, or `None` if not a list type.
+fn parse_list_type(decl: &str) -> Option<&str> {
+    let rest = decl.strip_prefix("list(")?;
+    rest.strip_suffix(')').map(str::trim)
 }
 
 impl App {
@@ -92,5 +116,50 @@ mod tests {
         let err = validate_input_type("k", &Value::String("x".into()), "object");
         assert!(err.is_err());
         assert!(err.unwrap_err().to_string().contains("Unknown input type"));
+    }
+
+    #[test]
+    fn test_validate_list_of_strings_ok() {
+        let v = Value::Sequence(vec![
+            Value::String("a".into()),
+            Value::String("b".into()),
+        ]);
+        assert!(validate_input_type("ports", &v, "list(string)").is_ok());
+    }
+
+    #[test]
+    fn test_validate_list_element_type_mismatch() {
+        let v = Value::Sequence(vec![Value::String("a".into()), Value::Number(2.into())]);
+        let err = validate_input_type("ports", &v, "list(string)").unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("ports[1]"), "msg was: {msg}");
+        assert!(msg.contains("expected type 'string'"), "msg was: {msg}");
+    }
+
+    #[test]
+    fn test_validate_list_value_not_a_sequence() {
+        let v = Value::String("not-a-list".into());
+        let err = validate_input_type("ports", &v, "list(string)").unwrap_err();
+        assert!(err.to_string().contains("expected type 'list(string)'"));
+    }
+
+    #[test]
+    fn test_validate_empty_list_ok() {
+        let v = Value::Sequence(vec![]);
+        assert!(validate_input_type("ports", &v, "list(string)").is_ok());
+    }
+
+    #[test]
+    fn test_validate_bare_list_type_ok() {
+        let v = Value::Sequence(vec![Value::Number(1.into()), Value::String("x".into())]);
+        assert!(validate_input_type("items", &v, "list").is_ok());
+    }
+
+    #[test]
+    fn test_parse_list_type_helper() {
+        assert_eq!(parse_list_type("list(string)"), Some("string"));
+        assert_eq!(parse_list_type("list(  number  )"), Some("number"));
+        assert_eq!(parse_list_type("list"), None);
+        assert_eq!(parse_list_type("string"), None);
     }
 }
