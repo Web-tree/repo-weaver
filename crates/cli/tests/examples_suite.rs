@@ -26,6 +26,11 @@ struct ExampleSettings {
     ignore_paths: Vec<String>,
     #[serde(default)]
     custom_assertions: Vec<CustomAssertion>,
+    /// When true, the example demonstrates a CLI failure (e.g. drift on
+    /// `--strategy stop`). Non-zero exit becomes the success criterion and
+    /// before/after parity is still asserted so we verify no side effects.
+    #[serde(default)]
+    expect_failure: bool,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Default, PartialEq, Eq)]
@@ -150,14 +155,19 @@ fn run_example(example_dir: &Path, settings: &ExampleSettings) -> ExampleResult 
         .output()
         .expect("failed to execute rw");
 
-    if !output.status.success() {
+    if output.status.success() == settings.expect_failure {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        let detail = if settings.expect_failure {
+            "cli command unexpectedly succeeded (expected failure)".to_string()
+        } else {
+            format!("cli command failed: {stderr}")
+        };
         return ExampleResult {
             name,
             stage: settings.stage,
             command,
             ok: false,
-            details: vec![format!("cli command failed: {stderr}")],
+            details: vec![detail],
         };
     }
 
@@ -219,6 +229,9 @@ fn merged_settings(cfg: &SuiteConfig, name: &str) -> ExampleSettings {
         }
         if !override_cfg.custom_assertions.is_empty() {
             merged.custom_assertions = override_cfg.custom_assertions.clone();
+        }
+        if override_cfg.expect_failure {
+            merged.expect_failure = true;
         }
     }
     merged
