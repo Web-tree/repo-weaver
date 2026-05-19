@@ -1,6 +1,6 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
-use wasmtime::component::{Linker, ResourceTable, bindgen};
+use wasmtime::component::{HasSelf, Linker, ResourceTable, bindgen};
 use wasmtime::{Config, Engine};
 
 bindgen!({
@@ -87,7 +87,7 @@ impl WasmPluginEngine {
         let mut linker = Linker::new(&engine);
 
         // Link our world
-        Provider::add_to_linker(&mut linker, |state: &mut Host| state)?;
+        Provider::add_to_linker::<_, HasSelf<_>>(&mut linker, |state: &mut Host| state)?;
 
         Ok(Self { engine, linker })
     }

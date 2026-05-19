@@ -104,6 +104,39 @@ pub struct AppConfig {
     pub path: String,
     #[serde(default)]
     pub inputs: HashMap<String, serde_yml::Value>,
+    #[serde(default)]
+    pub ensures: Vec<EnsureSpec>,
+}
+
+/// Declarative convergence actions attached to an app. Variant names map to
+/// the `type:` value in YAML (e.g. `ensure.npm.script`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum EnsureSpec {
+    #[serde(rename = "ensure.npm.script")]
+    NpmScript {
+        file: String,
+        name: String,
+        value: String,
+    },
+    #[serde(rename = "ensure.npm.dep")]
+    NpmDep {
+        file: String,
+        name: String,
+        version: String,
+    },
+    #[serde(rename = "ensure.npm.devDep")]
+    NpmDevDep {
+        file: String,
+        name: String,
+        version: String,
+    },
+    #[serde(rename = "ensure.npm.engine")]
+    NpmEngine {
+        file: String,
+        name: String,
+        version: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

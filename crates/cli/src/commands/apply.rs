@@ -224,6 +224,16 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                 }
             }
         }
+
+        // Ensures (convergence actions). Applied after files/templates so
+        // they can mutate generated artefacts in place.
+        for ensure in &app_config.ensures {
+            if dry_run {
+                info!("Would apply ensure {:?} for {}", ensure, app_config.name);
+            } else {
+                repo_weaver_core::ensures::apply_ensure(&dest_root, ensure)?;
+            }
+        }
     }
 
     if !dry_run {
@@ -266,6 +276,7 @@ mod tests {
                 module: "m".into(),
                 path: ".".into(),
                 inputs,
+                ensures: vec![],
             }],
             secrets: Default::default(),
         }
