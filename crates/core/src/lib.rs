@@ -4,6 +4,7 @@ pub mod engine;
 pub mod lockfile;
 pub mod logging;
 pub mod module;
+pub mod plan;
 pub mod plugin;
 pub mod secret;
 pub mod state;
