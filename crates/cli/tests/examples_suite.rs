@@ -31,6 +31,11 @@ struct ExampleSettings {
     /// before/after parity is still asserted so we verify no side effects.
     #[serde(default)]
     expect_failure: bool,
+    /// Optional precise exit-code assertion. When set, the CLI must exit
+    /// with exactly this code (e.g. `2` for `plan --detailed-exitcode` on
+    /// drift). Implies `expect_failure` for any non-zero value.
+    #[serde(default)]
+    expected_exit_code: Option<i32>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Default, PartialEq, Eq)]
@@ -155,9 +160,14 @@ fn run_example(example_dir: &Path, settings: &ExampleSettings) -> ExampleResult 
         .output()
         .expect("failed to execute rw");
 
-    if output.status.success() == settings.expect_failure {
+    let expect_failure = settings.expect_failure
+        || settings
+            .expected_exit_code
+            .is_some_and(|code| code != 0);
+
+    if output.status.success() == expect_failure {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        let detail = if settings.expect_failure {
+        let detail = if expect_failure {
             "cli command unexpectedly succeeded (expected failure)".to_string()
         } else {
             format!("cli command failed: {stderr}")
@@ -169,6 +179,21 @@ fn run_example(example_dir: &Path, settings: &ExampleSettings) -> ExampleResult 
             ok: false,
             details: vec![detail],
         };
+    }
+
+    if let Some(expected) = settings.expected_exit_code {
+        let actual = output.status.code().unwrap_or(-1);
+        if actual != expected {
+            return ExampleResult {
+                name,
+                stage: settings.stage,
+                command,
+                ok: false,
+                details: vec![format!(
+                    "exit code mismatch: expected {expected}, got {actual}"
+                )],
+            };
+        }
     }
 
     let mut details = compare_dirs(&before_workspace, &after_dir, &settings.ignore_paths);
@@ -232,6 +257,9 @@ fn merged_settings(cfg: &SuiteConfig, name: &str) -> ExampleSettings {
         }
         if override_cfg.expect_failure {
             merged.expect_failure = true;
+        }
+        if override_cfg.expected_exit_code.is_some() {
+            merged.expected_exit_code = override_cfg.expected_exit_code;
         }
     }
     merged
