@@ -41,7 +41,7 @@ examples:
   14-run-task-with-args:
     stage: implemented
   15-node-npm-ensures:
-    stage: pending
+    stage: implemented
   16-go-module-management:
     stage: pending
   17-rust-cargo-management:
