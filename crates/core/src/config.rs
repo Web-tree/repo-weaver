@@ -112,7 +112,7 @@ pub struct SecretConfig {
     pub key: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ModuleManifest {
     #[serde(default)]
     pub inputs: HashMap<String, InputDef>,
@@ -123,7 +123,15 @@ pub struct ModuleManifest {
 }
 
 impl ModuleManifest {
+    /// Load a module manifest from disk.
+    ///
+    /// A missing `weaver.module.yaml` is treated as an empty manifest:
+    /// modules that only ship static files under `files/` do not need
+    /// to declare inputs, outputs, or tasks.
     pub fn load(path: &std::path::Path) -> anyhow::Result<Self> {
+        if !path.exists() {
+            return Ok(Self::default());
+        }
         let content = std::fs::read_to_string(path)?;
         let manifest: Self = serde_yml::from_str(&content)?;
         Ok(manifest)
@@ -150,6 +158,38 @@ mod tests {
     use super::*;
     use std::fs;
     use tempfile::TempDir;
+
+    #[test]
+    fn module_manifest_missing_file_yields_empty_manifest() {
+        let dir = TempDir::new().unwrap();
+        let missing = dir.path().join("weaver.module.yaml");
+        assert!(!missing.exists());
+
+        let manifest = ModuleManifest::load(&missing).expect("missing manifest should default");
+        assert!(manifest.inputs.is_empty());
+        assert!(manifest.outputs.is_empty());
+        assert!(manifest.tasks.is_empty());
+    }
+
+    #[test]
+    fn module_manifest_loads_when_present() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("weaver.module.yaml");
+        fs::write(
+            &path,
+            r#"
+inputs:
+  region:
+    type: string
+    required: true
+"#,
+        )
+        .unwrap();
+
+        let manifest = ModuleManifest::load(&path).unwrap();
+        assert_eq!(manifest.inputs.len(), 1);
+        assert!(manifest.inputs.contains_key("region"));
+    }
 
     #[test]
     fn test_load_single_file_no_includes() {

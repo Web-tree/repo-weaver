@@ -7,7 +7,7 @@ defaults:
 
 examples:
   01-basic-static-files:
-    stage: pending
+    stage: implemented
   02-template-rendering:
     stage: implemented
   03-mixed-files-and-templates:
@@ -17,13 +17,13 @@ examples:
   05-nested-folders:
     stage: implemented
   06-config-includes:
-    stage: pending
+    stage: implemented
   07-multiple-modules:
-    stage: pending
+    stage: implemented
   08-module-update:
-    stage: pending
+    stage: implemented
   09-drift-detection:
-    stage: pending
+    stage: implemented
   10-template-conditionals:
     stage: pending
   11-apply-stop-on-drift:
