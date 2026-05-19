@@ -31,7 +31,9 @@ examples:
     stage: implemented
     expect_failure: true
   12-plan-detailed-exitcode:
-    stage: pending
+    stage: implemented
+    args: ["plan", "--detailed-exitcode"]
+    expected_exit_code: 2
   13-plan-out-file:
     stage: pending
   14-run-task-with-args:
