@@ -102,30 +102,27 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                     let dest_path = dest_root.join(rel_path);
 
                     // Check Drift
-                    if dest_path.exists() {
+                    if dest_path.exists()
+                        && let Some(file_state) = state.files.get(&dest_path)
+                    {
                         let current_chk = calculate_checksum(&dest_path)?;
-                        if let Some(file_state) = state.files.get(&dest_path) {
-                            if file_state.checksum != current_chk {
-                                // Drift detected
-                                if args.strategy == "stop" && !args.auto_approve {
-                                    if dry_run {
-                                        info!(
-                                            "Drift detected for {:?}. Plan would fail.",
-                                            dest_path
-                                        );
-                                    }
-                                    anyhow::bail!(
-                                        "Drift detected for {:?}. Use --strategy overwrite to force.",
+                        if file_state.checksum != current_chk {
+                            if args.strategy == "stop" {
+                                if dry_run {
+                                    info!(
+                                        "Drift detected for {:?}. Plan would fail.",
                                         dest_path
                                     );
-                                } else {
-                                    if dry_run {
-                                        info!(
-                                            "Drift detected for {:?}. Plan would overwrite.",
-                                            dest_path
-                                        );
-                                    }
                                 }
+                                anyhow::bail!(
+                                    "Drift detected for {:?}. Use --strategy overwrite to force.",
+                                    dest_path
+                                );
+                            } else if dry_run {
+                                info!(
+                                    "Drift detected for {:?}. Plan would overwrite.",
+                                    dest_path
+                                );
                             }
                         }
                     }
@@ -137,13 +134,9 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                         Engine::ensure_file_copy(entry.path(), &dest_path)?;
 
                         let new_chk = calculate_checksum(&dest_path)?;
-                        state.files.insert(
-                            dest_path.clone(),
-                            FileState {
-                                checksum: new_chk,
-                                last_updated: "now".to_string(),
-                            },
-                        );
+                        state
+                            .files
+                            .insert(dest_path.clone(), FileState::new(new_chk));
                     }
                 }
             }
@@ -173,27 +166,27 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                     };
 
                     // Drift Check
-                    if dest_path.exists() {
+                    if dest_path.exists()
+                        && let Some(file_state) = state.files.get(&dest_path)
+                    {
                         let current_chk = calculate_checksum(&dest_path)?;
-                        if let Some(file_state) = state.files.get(&dest_path) {
-                            if file_state.checksum != current_chk {
-                                if args.strategy == "stop" && !args.auto_approve {
-                                    if dry_run {
-                                        info!(
-                                            "Drift detected for {:?}. Plan would fail.",
-                                            dest_path
-                                        );
-                                    }
-                                    anyhow::bail!(
-                                        "Drift detected for {:?}. Use --strategy overwrite to force.",
-                                        dest_path
-                                    );
-                                } else if dry_run {
+                        if file_state.checksum != current_chk {
+                            if args.strategy == "stop" {
+                                if dry_run {
                                     info!(
-                                        "Drift detected for {:?}. Plan would overwrite.",
+                                        "Drift detected for {:?}. Plan would fail.",
                                         dest_path
                                     );
                                 }
+                                anyhow::bail!(
+                                    "Drift detected for {:?}. Use --strategy overwrite to force.",
+                                    dest_path
+                                );
+                            } else if dry_run {
+                                info!(
+                                    "Drift detected for {:?}. Plan would overwrite.",
+                                    dest_path
+                                );
                             }
                         }
                     }
@@ -208,13 +201,9 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                         std::fs::write(&dest_path, &rendered)?;
 
                         let new_chk = calculate_checksum_from_bytes(rendered.as_bytes());
-                        state.files.insert(
-                            dest_path.clone(),
-                            FileState {
-                                checksum: new_chk,
-                                last_updated: "now".to_string(),
-                            },
-                        );
+                        state
+                            .files
+                            .insert(dest_path.clone(), FileState::new(new_chk));
                     }
                 }
             }

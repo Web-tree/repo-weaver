@@ -24,10 +24,12 @@ examples:
     stage: implemented
   09-drift-detection:
     stage: implemented
+    args: ["apply", "--strategy", "overwrite", "--auto-approve"]
   10-template-conditionals:
     stage: implemented
   11-apply-stop-on-drift:
-    stage: pending
+    stage: implemented
+    expect_failure: true
   12-plan-detailed-exitcode:
     stage: pending
   13-plan-out-file:
