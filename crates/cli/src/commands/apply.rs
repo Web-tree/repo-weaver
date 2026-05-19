@@ -6,7 +6,7 @@ use repo_weaver_core::module::ModuleResolver;
 use repo_weaver_core::state::{
     FileState, State, calculate_checksum, calculate_checksum_from_bytes,
 };
-use repo_weaver_core::template::TemplateEngine;
+use repo_weaver_core::template::{TemplateEngine, build_context};
 use std::path::{Path, PathBuf};
 use tracing::info;
 use walkdir::WalkDir;
@@ -159,31 +159,8 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                     let rel_path = entry.path().strip_prefix(&templates_src)?;
                     let content = std::fs::read_to_string(entry.path())?;
                     let mut context = tera_context.clone();
-                    for (k, v) in &app.inputs {
-                        match v {
-                            serde_yml::Value::String(s) => context.insert(k, s),
-                            serde_yml::Value::Number(n) => {
-                                if let Some(i) = n.as_i64() {
-                                    context.insert(k, &i);
-                                } else if let Some(f) = n.as_f64() {
-                                    context.insert(k, &f);
-                                }
-                            }
-                            serde_yml::Value::Bool(b) => context.insert(k, b),
-                            other => {
-                                let s = serde_yml::to_string(other).unwrap_or_default();
-                                context.insert(k, &s);
-                            }
-                        }
-                    }
-                    // Basic rendering, should use template_engine properly
-                    // For MVP just text replacement logic or tera one-off?
-                    // Existing code used manual text/tera context?
-                    // Wait, Step 953 showed "let mut context = tera_context.clone()".
-                    // And it didn't actually render in the placeholder code I saw.
-                    // I will assume simple copy or placeholder for now.
-                    // Actually, I should use template_engine.render if available.
-                    // But let's stick to simple text for now or just copy.
+                    let input_ctx = build_context(&app.inputs)?;
+                    context.extend(input_ctx);
 
                     // Destination logic
                     let file_name = entry.file_name().to_string_lossy();

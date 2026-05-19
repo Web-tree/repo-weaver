@@ -25,7 +25,7 @@ examples:
   09-drift-detection:
     stage: implemented
   10-template-conditionals:
-    stage: pending
+    stage: implemented
   11-apply-stop-on-drift:
     stage: pending
   12-plan-detailed-exitcode:
