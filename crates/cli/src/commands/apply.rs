@@ -3,10 +3,12 @@ use repo_weaver_core::app::App;
 use repo_weaver_core::config::{ModuleManifest, WeaverConfig};
 use repo_weaver_core::engine::Engine;
 use repo_weaver_core::module::ModuleResolver;
+use repo_weaver_core::plan::PlanFile;
 use repo_weaver_core::state::{
     FileState, State, calculate_checksum, calculate_checksum_from_bytes,
 };
 use repo_weaver_core::template::{TemplateEngine, build_context};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use tracing::info;
 use walkdir::WalkDir;
@@ -20,6 +22,11 @@ pub struct ApplyArgs {
     /// Conflict resolution strategy
     #[arg(long, default_value = "stop")]
     pub strategy: String, // Parsing enum later
+
+    /// Apply a previously saved plan file (`rw plan --out`). Fails if the
+    /// workspace inputs no longer match the captured plan.
+    #[arg(long)]
+    pub plan: Option<PathBuf>,
 }
 
 pub async fn run(args: ApplyArgs) -> anyhow::Result<()> {
@@ -40,6 +47,15 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
         anyhow::bail!("weaver.yaml not found");
     }
     let config = WeaverConfig::load_with_includes(config_path)?;
+
+    // Validate saved plan against current config before any mutations.
+    if let Some(plan_path) = args.plan.as_deref() {
+        let plan = PlanFile::load(plan_path)?;
+        let current_inputs = collect_current_inputs(&config);
+        if let Err(stale) = plan.verify_against_inputs(&current_inputs) {
+            anyhow::bail!("{stale}");
+        }
+    }
 
     // Load State
     let state_path = Path::new(".rw/state.yaml");
@@ -218,4 +234,60 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+/// Flatten per-app inputs into the `<app>.<input>` keys used by saved plans.
+fn collect_current_inputs(config: &WeaverConfig) -> BTreeMap<String, serde_json::Value> {
+    let mut out = BTreeMap::new();
+    for app in &config.apps {
+        for (key, value) in &app.inputs {
+            let flat_key = format!("{}.{}", app.name, key);
+            if let Ok(json) = serde_json::to_value(value) {
+                out.insert(flat_key, json);
+            }
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repo_weaver_core::config::{AppConfig, WeaverConfig};
+    use std::collections::HashMap;
+
+    fn make_config(inputs: HashMap<String, serde_yml::Value>) -> WeaverConfig {
+        WeaverConfig {
+            version: "1".into(),
+            includes: vec![],
+            modules: vec![],
+            apps: vec![AppConfig {
+                name: "billing".into(),
+                module: "m".into(),
+                path: ".".into(),
+                inputs,
+            }],
+            secrets: Default::default(),
+        }
+    }
+
+    #[test]
+    fn collect_current_inputs_flattens_keys() {
+        let mut inputs = HashMap::new();
+        inputs.insert("retention_days".into(), serde_yml::Value::Number(90.into()));
+        inputs.insert("name".into(), serde_yml::Value::String("svc".into()));
+
+        let flat = collect_current_inputs(&make_config(inputs));
+        assert_eq!(
+            flat.get("billing.retention_days"),
+            Some(&serde_json::json!(90))
+        );
+        assert_eq!(flat.get("billing.name"), Some(&serde_json::json!("svc")));
+    }
+
+    #[test]
+    fn collect_current_inputs_empty_when_no_inputs() {
+        let flat = collect_current_inputs(&make_config(HashMap::new()));
+        assert!(flat.is_empty());
+    }
 }

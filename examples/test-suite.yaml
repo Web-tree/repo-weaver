@@ -35,7 +35,9 @@ examples:
     args: ["plan", "--detailed-exitcode"]
     expected_exit_code: 2
   13-plan-out-file:
-    stage: pending
+    stage: implemented
+    args: ["apply", "--plan", ".rw/plan.json", "--auto-approve"]
+    expect_failure: true
   14-run-task-with-args:
     stage: implemented
   15-node-npm-ensures:
