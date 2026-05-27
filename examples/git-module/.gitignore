@@ -1,0 +1,4 @@
+.rw
+app/
+.git/
+.gitmodules

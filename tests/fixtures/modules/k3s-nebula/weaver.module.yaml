@@ -1,0 +1,23 @@
+inputs:
+  cluster_name:
+    type: string
+    description: "Name of the cluster"
+    required: true
+  region:
+    type: string
+    description: "Target region"
+    default: "us-east-1"
+  node_count:
+    type: number
+    description: "Number of worker nodes"
+    default: 3
+
+tasks:
+  install:
+    command: "task install"
+    description: "Provision infrastructure and install k3s"
+  plan:
+    command: "task plan"
+    description: "Preview terraform changes"
+
+ensures: []

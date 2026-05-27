@@ -277,7 +277,9 @@ mod tests {
                 path: ".".into(),
                 inputs,
                 ensures: vec![],
+                checks: vec![],
             }],
+            checks: vec![],
             secrets: Default::default(),
         }
     }

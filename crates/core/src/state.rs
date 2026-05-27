@@ -31,10 +31,6 @@ impl Default for State {
     }
 }
 
-/// Per-file state tracked by `rw apply`.
-///
-/// Both `last_updated` and `source` are optional so state files written by
-/// earlier `rw` versions, or hand-authored fixtures, remain loadable.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileState {
     pub checksum: String,

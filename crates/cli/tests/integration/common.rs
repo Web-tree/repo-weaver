@@ -113,6 +113,98 @@ impl TestContext {
             .output()
             .unwrap();
     }
+
+    pub fn setup_module_with_manifest(
+        &self,
+        name: &str,
+        ref_: &str,
+        content: &str,
+        manifest: &str,
+    ) {
+        let remote_path = self.root.join("remotes").join(name);
+        fs::create_dir_all(&remote_path).unwrap();
+
+        // Init remote repo
+        std::process::Command::new("git")
+            .args(&["init", "--bare"])
+            .current_dir(&remote_path)
+            .output()
+            .unwrap();
+
+        // Create a separate "source" dir to commit and push from
+        let source_path = self.root.join("sources").join(name);
+        fs::create_dir_all(&source_path).unwrap();
+
+        std::process::Command::new("git")
+            .args(&["init"])
+            .current_dir(&source_path)
+            .output()
+            .expect("Failed to init git");
+
+        // Ensure master branch (default usually, but explicit is good)
+        // std::process::Command::new("git").args(&["checkout", "-b", "master"]).current_dir(&source_path).output().ok();
+        // Assume master is default
+
+        // Write content
+        let file_path = source_path.join("files/file.txt");
+        fs::create_dir_all(file_path.parent().unwrap()).unwrap();
+        fs::write(file_path, content).unwrap();
+
+        // Write manifest
+        fs::write(source_path.join("weaver.module.yaml"), manifest).unwrap();
+
+        // Force branch name to master ensuring it exists
+        std::process::Command::new("git")
+            .args(&["symbolic-ref", "HEAD", "refs/heads/master"])
+            .current_dir(&source_path)
+            .output()
+            .ok();
+
+        // Commit (Git user config might be needed in CI)
+        let git_envs = [
+            ("GIT_AUTHOR_NAME", "Test"),
+            ("GIT_AUTHOR_EMAIL", "test@example.com"),
+            ("GIT_COMMITTER_NAME", "Test"),
+            ("GIT_COMMITTER_EMAIL", "test@example.com"),
+        ];
+
+        let out = std::process::Command::new("git")
+            .args(&["add", "."])
+            .current_dir(&source_path)
+            .envs(git_envs)
+            .output()
+            .expect("Failed to git add");
+        assert!(out.status.success(), "git add failed");
+
+        let out = std::process::Command::new("git")
+            .args(&["commit", "-m", "Initial commit"])
+            .current_dir(&source_path)
+            .envs(git_envs)
+            .output()
+            .expect("Failed to git commit");
+        assert!(out.status.success(), "git commit failed");
+
+        // Push to bare remote
+        std::process::Command::new("git")
+            .args(&["remote", "add", "origin", remote_path.to_str().unwrap()])
+            .current_dir(&source_path)
+            .output()
+            .unwrap();
+
+        let out = std::process::Command::new("git")
+            .args(&["push", "origin", "master"])
+            .current_dir(&source_path)
+            .output()
+            .expect("Failed to git push");
+        if !out.status.success() {
+            println!(
+                "Git push failed: stdout: {}, stderr: {}",
+                String::from_utf8_lossy(&out.stdout),
+                String::from_utf8_lossy(&out.stderr)
+            );
+            panic!("Git push failed");
+        }
+    }
 }
 
 pub fn weaver_config(module_name: &str, ref_: &str, root: &Path) -> String {

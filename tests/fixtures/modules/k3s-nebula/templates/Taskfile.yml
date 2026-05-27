@@ -1,0 +1,13 @@
+version: '3'
+
+tasks:
+  install:
+    desc: Install k3s cluster
+    cmds:
+      - echo "Installing k3s cluster {{ cluster_name }} in {{ region }}"
+      - echo "Nodes: {{ node_count }}"
+  
+  plan:
+    desc: Plan terraform
+    cmds:
+      - echo "Planning terraform for {{ cluster_name }}"
