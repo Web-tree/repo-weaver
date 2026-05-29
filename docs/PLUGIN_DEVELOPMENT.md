@@ -1,5 +1,12 @@
 # Plugin Development & Release Guide
 
+> **Bundled plugins.** `plugins/aws-ssm` (secrets provider) and `plugins/ai-patch`
+> (the `ai.patch` ensure) are wired into the engine. `plugins/npm-script` is a
+> **reference example** of the plugin SDK: the built-in `npm.script` /
+> `ensure.npm.*` ensures are handled natively (deterministic package.json edits,
+> no `npm` required), so npm-script is here to demonstrate authoring a plugin,
+> not as the production npm handler.
+
 ## Creating a New Plugin
 
 This guide walks you through creating a new plugin for `repo-weaver`.

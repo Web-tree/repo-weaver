@@ -1,7 +1,9 @@
 use std::io::Write;
+use std::path::Path;
 use std::process::{Command, Stdio};
-use wasmtime::component::{HasSelf, Linker, ResourceTable, bindgen};
-use wasmtime::{Config, Engine};
+use wasmtime::component::{Component, HasSelf, Linker, ResourceTable, bindgen};
+use wasmtime::{Config, Engine, Store};
+use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiView};
 
 bindgen!({
     world: "provider",
@@ -9,14 +11,27 @@ bindgen!({
 });
 
 pub struct Host {
-    // We might need WASI context later, but for now just custom interfaces
     pub table: ResourceTable,
+    pub wasi: WasiCtx,
 }
 
 impl Host {
     pub fn new() -> Self {
+        // Plugins built with cargo-component import WASI; inherit stdio/env so
+        // the provider (e.g. aws-ssm shelling `aws`) sees the host environment.
+        let wasi = WasiCtxBuilder::new().inherit_stdio().inherit_env().build();
         Self {
             table: ResourceTable::new(),
+            wasi,
+        }
+    }
+}
+
+impl WasiView for Host {
+    fn ctx(&mut self) -> wasmtime_wasi::WasiCtxView<'_> {
+        wasmtime_wasi::WasiCtxView {
+            ctx: &mut self.wasi,
+            table: &mut self.table,
         }
     }
 }
@@ -84,10 +99,13 @@ impl WasmPluginEngine {
         config.wasm_component_model(true);
         let engine = Engine::new(&config)?;
 
-        let mut linker = Linker::new(&engine);
+        let mut linker: Linker<Host> = Linker::new(&engine);
 
-        // Link our world
-        Provider::add_to_linker::<_, HasSelf<_>>(&mut linker, |state: &mut Host| state)?;
+        // WASI support (required by cargo-component built plugins).
+        wasmtime_wasi::p2::add_to_linker_sync(&mut linker)?;
+
+        // Link our `provider` world (exports `secrets`, imports `process`).
+        Provider::add_to_linker::<Host, HasSelf<Host>>(&mut linker, |state| state)?;
 
         Ok(Self { engine, linker })
     }
@@ -96,11 +114,41 @@ impl WasmPluginEngine {
         &self.engine
     }
 
-    // Helper to instantiate and run "get-secret" if we wanted to call it from here.
-    // For now, T022 manually calls plugins.
-    // We need to expose a way to get the Linker or instantiate.
-
     pub fn linker(&self) -> &Linker<Host> {
         &self.linker
+    }
+
+    /// Load a secrets-provider component from disk.
+    pub fn load_provider(&self, wasm_path: &Path) -> anyhow::Result<LoadedProvider> {
+        let component = Component::from_file(&self.engine, wasm_path)?;
+        Ok(LoadedProvider {
+            engine: self.engine.clone(),
+            linker: self.linker.clone(),
+            component,
+        })
+    }
+}
+
+/// A loaded secrets-provider plugin, ready to resolve secrets.
+pub struct LoadedProvider {
+    engine: Engine,
+    linker: Linker<Host>,
+    component: Component,
+}
+
+impl LoadedProvider {
+    /// Resolve a single secret `key` through the plugin's `get-secret` export.
+    pub fn get_secret(&self, key: &str) -> anyhow::Result<String> {
+        let mut store = Store::new(&self.engine, Host::new());
+        let bindings = Provider::instantiate(&mut store, &self.component, &self.linker)?;
+
+        let req = exports::weaver::plugin::secrets::SecretRequest {
+            key: key.to_string(),
+        };
+
+        bindings
+            .weaver_plugin_secrets()
+            .call_get_secret(&mut store, &req)?
+            .map_err(|e| anyhow::anyhow!("Secret provider error: {:?}", e))
     }
 }

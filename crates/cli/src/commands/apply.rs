@@ -5,6 +5,7 @@ use repo_weaver_core::engine::Engine;
 use repo_weaver_core::module::ModuleResolver;
 use repo_weaver_core::plan::PlanFile;
 use repo_weaver_core::plugin::resolver::PluginResolver;
+use repo_weaver_core::secret::SecretResolver;
 use repo_weaver_core::state::{
     FileState, State, calculate_checksum, calculate_checksum_from_bytes,
 };
@@ -69,11 +70,27 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
     // 2. Init components
     let resolver = ModuleResolver::new(None)?;
     let template_engine = TemplateEngine::new()?;
-    let tera_context = tera::Context::new();
+    let mut tera_context = tera::Context::new();
 
     // Plugin resolver for module-declared ensures backed by WASM plugins.
     let mut plugin_resolver = PluginResolver::new(PathBuf::from("."))?;
     plugin_resolver.set_offline(args.offline);
+
+    // Resolve declared secrets and expose them to templates under `secrets.*`.
+    // The `env` provider reads env vars; other providers run as WASM plugins.
+    if !config.secrets.is_empty() {
+        let mut secret_values = serde_json::Map::new();
+        for (name, secret_cfg) in &config.secrets {
+            let value = SecretResolver::resolve(secret_cfg, &plugin_resolver)
+                .await
+                .map_err(|e| anyhow::anyhow!("secret '{name}': {e}"))?;
+            secret_values.insert(
+                name.clone(),
+                serde_json::Value::String(value.expose().clone()),
+            );
+        }
+        tera_context.insert("secrets", &secret_values);
+    }
 
     // 3. Process Apps
     for app_config in &config.apps {

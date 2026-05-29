@@ -1,3 +1,6 @@
+use crate::config::SecretConfig;
+use crate::plugin::resolver::PluginResolver;
+use crate::plugin::wasm::WasmPluginEngine;
 use std::fmt;
 
 #[derive(Clone)]
@@ -28,15 +31,34 @@ impl<T> fmt::Display for Secret<T> {
 pub struct SecretResolver;
 
 impl SecretResolver {
-    pub fn resolve(key: &str) -> anyhow::Result<Secret<String>> {
-        // Placeholder for MVP resolution
-        // 1. Try Env Var
-        if let Ok(v) = std::env::var(key) {
-            return Ok(Secret::new(v));
+    /// Resolve a declared secret to its value.
+    ///
+    /// The `env` provider reads an environment variable named by `cfg.key`.
+    /// Any other provider name is resolved as a secrets-provider plugin
+    /// (e.g. `aws-ssm`) via the WASM `provider` world, which runs the
+    /// underlying native tool (`aws ssm get-parameter`, ...) inside the
+    /// sandbox.
+    pub async fn resolve(
+        cfg: &SecretConfig,
+        plugin_resolver: &PluginResolver,
+    ) -> anyhow::Result<Secret<String>> {
+        if cfg.provider == "env" {
+            let value = std::env::var(&cfg.key)
+                .map_err(|_| anyhow::anyhow!("secret env var '{}' is not set", cfg.key))?;
+            return Ok(Secret::new(value));
         }
 
-        // 2. Future: Call Wasm Plugins via WasmPluginEngine
+        // Provider name maps to a plugin name (e.g. "aws-ssm").
+        let resolved = plugin_resolver
+            .resolve_ensure_type(&cfg.provider)
+            .await
+            .map_err(|e| {
+                anyhow::anyhow!("failed to resolve secrets provider '{}': {e}", cfg.provider)
+            })?;
 
-        Ok(Secret::new(format!("resolved-{}", key)))
+        let engine = WasmPluginEngine::new()?;
+        let provider = engine.load_provider(&resolved.wasm_path)?;
+        let value = provider.get_secret(&cfg.key)?;
+        Ok(Secret::new(value))
     }
 }

@@ -211,7 +211,30 @@ pub struct ModuleManifest {
     #[serde(default)]
     pub tasks: HashMap<String, TaskDef>,
     #[serde(default)]
-    pub ensures: Vec<EnsureConfig>,
+    pub ensures: Vec<EnsureEntry>,
+}
+
+/// A single `ensures:` entry in a module manifest.
+///
+/// Built-in types deserialize into the typed [`EnsureConfig`]. Any other
+/// `type:` is captured generically and dispatched to a WASM plugin named after
+/// the type (e.g. `go.dep` -> `go-dep`), making the ensure surface extensible
+/// without changing core.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum EnsureEntry {
+    Known(EnsureConfig),
+    Plugin(PluginEnsure),
+}
+
+/// A generic, plugin-backed ensure: a `type:` plus arbitrary config that is
+/// forwarded verbatim (as JSON) to the resolved plugin.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginEnsure {
+    #[serde(rename = "type")]
+    pub type_name: String,
+    #[serde(flatten)]
+    pub config: serde_json::Map<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -236,6 +259,11 @@ pub enum EnsureConfig {
         prompt: String,
         #[serde(default)]
         verify_command: String,
+        /// External AI CLI that reads the prompt on stdin and writes a unified
+        /// diff to stdout (e.g. "claude -p", "gemini", "codex", or a custom
+        /// command). Required to apply the patch (PRD §4.6).
+        #[serde(default)]
+        tool: String,
     },
 }
 
@@ -469,5 +497,35 @@ apps:
         // a.yaml sorts before b.yaml
         assert_eq!(config.apps[0].name, "a-app");
         assert_eq!(config.apps[1].name, "b-app");
+    }
+
+    #[test]
+    fn ensure_entry_known_type_parses_typed() {
+        let yaml = "type: git.submodule\nurl: https://example.com/x.git\npath: vendor/x\nref: main\n";
+        let entry: EnsureEntry = serde_yml::from_str(yaml).unwrap();
+        match entry {
+            EnsureEntry::Known(EnsureConfig::GitSubmodule { url, path, r#ref }) => {
+                assert_eq!(url, "https://example.com/x.git");
+                assert_eq!(path, "vendor/x");
+                assert_eq!(r#ref, "main");
+            }
+            other => panic!("expected typed GitSubmodule, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn ensure_entry_unknown_type_becomes_generic_plugin() {
+        let yaml = "type: go.dep\nmodule: github.com/pkg/errors\nversion: v0.9.1\n";
+        let entry: EnsureEntry = serde_yml::from_str(yaml).unwrap();
+        match entry {
+            EnsureEntry::Plugin(p) => {
+                assert_eq!(p.type_name, "go.dep");
+                // The non-`type` fields are captured verbatim for the plugin.
+                assert_eq!(p.config.get("module").unwrap(), "github.com/pkg/errors");
+                assert_eq!(p.config.get("version").unwrap(), "v0.9.1");
+                assert!(!p.config.contains_key("type"), "type must not leak into config");
+            }
+            other => panic!("expected generic Plugin entry, got {other:?}"),
+        }
     }
 }

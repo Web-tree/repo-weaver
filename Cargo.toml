@@ -1,6 +1,18 @@
 [workspace]
 resolver = "2"
-members = ["crates/cli", "crates/core", "crates/ops", "plugins/aws-ssm", "plugins/npm-script"]
+members = [
+    "crates/cli",
+    "crates/core",
+    "crates/ops",
+    "plugins/aws-ssm",
+    "plugins/npm-script",
+    "plugins/ai-patch",
+    "plugins/go-dep",
+    "plugins/cargo-dep",
+    "plugins/terraform-fmt",
+    "plugins/k8s-apply",
+    "plugins/taskfile-task",
+]
 default-members = ["crates/cli", "crates/core", "crates/ops"]
 
 [workspace.package]

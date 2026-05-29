@@ -106,25 +106,23 @@ pub async fn run(args: DescribeArgs) -> anyhow::Result<()> {
         println!();
 
         println!("Ensures:");
-        for ensure_config in &manifest.ensures {
-            // Debug print ensure config?
-            // EnsureConfig is enum.
-            use repo_weaver_core::config::EnsureConfig;
-            match ensure_config {
-                EnsureConfig::GitSubmodule { url, path, r#ref } => {
+        for entry in &manifest.ensures {
+            use repo_weaver_core::config::{EnsureConfig, EnsureEntry};
+            match entry {
+                EnsureEntry::Known(EnsureConfig::GitSubmodule { url, path, r#ref }) => {
                     println!("  - git.submodule: {} -> {} ({})", url, path, r#ref);
                 }
-                EnsureConfig::GitClonePinned { url, path, r#ref } => {
+                EnsureEntry::Known(EnsureConfig::GitClonePinned { url, path, r#ref }) => {
                     println!("  - git.clone_pinned: {} -> {} ({})", url, path, r#ref);
                 }
-                EnsureConfig::NpmScript { name, command } => {
+                EnsureEntry::Known(EnsureConfig::NpmScript { name, command }) => {
                     println!("  - npm.script: {} -> {}", name, command);
                 }
-                EnsureConfig::AiPatch {
-                    prompt,
-                    verify_command: _,
-                } => {
-                    println!("  - ai.patch: {} (Ensures AI patch is applied)", prompt);
+                EnsureEntry::Known(EnsureConfig::AiPatch { prompt, tool, .. }) => {
+                    println!("  - ai.patch: {} (via '{}')", prompt, tool);
+                }
+                EnsureEntry::Plugin(p) => {
+                    println!("  - {} (plugin)", p.type_name);
                 }
             }
         }
