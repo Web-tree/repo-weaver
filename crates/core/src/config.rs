@@ -15,6 +15,8 @@ pub struct WeaverConfig {
     pub checks: Vec<CheckDef>,
     #[serde(default)]
     pub secrets: HashMap<String, SecretConfig>,
+    #[serde(default)]
+    pub plugins: HashMap<String, PluginConfig>,
 }
 
 /// A config fragment loaded from includes or weaver.d/ — version is optional.
@@ -28,6 +30,35 @@ pub struct WeaverConfigFragment {
     pub checks: Vec<CheckDef>,
     #[serde(default)]
     pub secrets: HashMap<String, SecretConfig>,
+    #[serde(default)]
+    pub plugins: HashMap<String, PluginConfig>,
+}
+
+/// Declarative plugin source. A plugin provides ensure types via a WASM
+/// component. Exactly one of `git` or `path` must be set.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PluginConfig {
+    #[serde(default)]
+    pub git: Option<String>,
+    #[serde(default)]
+    pub path: Option<String>,
+    #[serde(default, rename = "ref")]
+    pub git_ref: Option<String>,
+}
+
+impl PluginConfig {
+    pub fn validate(&self, name: &str) -> anyhow::Result<()> {
+        if self.git.is_some() && self.path.is_some() {
+            anyhow::bail!(
+                "Plugin '{}' cannot have both 'git' and 'path' properties. Please choose one.",
+                name
+            );
+        }
+        if self.git.is_none() && self.path.is_none() {
+            anyhow::bail!("Plugin '{}' must have either 'git' or 'path' property.", name);
+        }
+        Ok(())
+    }
 }
 
 impl WeaverConfig {
@@ -77,6 +108,8 @@ impl WeaverConfig {
             config.merge_fragment(fragment);
         }
 
+        config.validate_plugins()?;
+
         Ok(config)
     }
 
@@ -90,6 +123,16 @@ impl WeaverConfig {
         for (k, v) in fragment.secrets {
             self.secrets.insert(k, v);
         }
+        for (k, v) in fragment.plugins {
+            self.plugins.insert(k, v);
+        }
+    }
+
+    fn validate_plugins(&self) -> anyhow::Result<()> {
+        for (name, plugin) in &self.plugins {
+            plugin.validate(name)?;
+        }
+        Ok(())
     }
 }
 

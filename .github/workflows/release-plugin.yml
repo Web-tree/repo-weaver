@@ -1,0 +1,156 @@
+name: Release Plugin
+
+on:
+    push:
+        tags:
+            - "*-v*.*.*" # Matches: npm-script-v1.0.0, aws-ssm-v0.1.0
+
+jobs:
+    parse-and-build:
+        name: Build and Release Plugin
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Parse tag
+              id: parse
+              run: |
+                  TAG="${{ github.ref_name }}"
+                  PLUGIN_NAME="${TAG%-v*}"
+                  VERSION="${TAG#*-v}"
+
+                  echo "plugin_name=$PLUGIN_NAME" >> $GITHUB_OUTPUT
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+                  echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+                  echo "📦 Plugin: $PLUGIN_NAME"
+                  echo "🏷️  Version: $VERSION"
+
+            - name: Verify plugin exists
+              run: |
+                  if [ ! -d "plugins/${{ steps.parse.outputs.plugin_name }}" ]; then
+                    echo "❌ Plugin directory not found: plugins/${{ steps.parse.outputs.plugin_name }}"
+                    exit 1
+                  fi
+                  echo "✓ Plugin directory found"
+
+            - name: Verify version matches Cargo.toml
+              run: |
+                  CARGO_VERSION=$(grep '^version' plugins/${{ steps.parse.outputs.plugin_name }}/Cargo.toml | cut -d'"' -f2)
+                  TAG_VERSION="${{ steps.parse.outputs.version }}"
+
+                  if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
+                    echo "❌ Version mismatch!"
+                    echo "   Tag version:        $TAG_VERSION"
+                    echo "   Cargo.toml version: $CARGO_VERSION"
+                    exit 1
+                  fi
+
+                  echo "✓ Version matches: $CARGO_VERSION"
+
+            - name: Install Rust
+              uses: actions-rust-lang/setup-rust-toolchain@v1
+              with:
+                  toolchain: stable
+                  target: wasm32-wasip1
+
+            - name: Install cargo-component
+              run: |
+                  cargo install cargo-component --locked
+
+            - name: Build plugin WASM
+              run: |
+                  echo "🔨 Building ${{ steps.parse.outputs.plugin_name }} v${{ steps.parse.outputs.version }}"
+                  cargo component build \
+                    --manifest-path=plugins/${{ steps.parse.outputs.plugin_name }}/Cargo.toml \
+                    --release
+
+            - name: Locate and rename WASM file
+              id: wasm
+              run: |
+                  # Find the built WASM file
+                  PLUGIN_NAME="${{ steps.parse.outputs.plugin_name }}"
+                  WASM_NAME=$(echo "$PLUGIN_NAME" | tr '-' '_')_plugin
+
+                  WASM_PATH="target/wasm32-wasip1/release/${WASM_NAME}.wasm"
+
+                  if [ ! -f "$WASM_PATH" ]; then
+                    echo "❌ WASM file not found at: $WASM_PATH"
+                    ls -la target/wasm32-wasip1/release/ || true
+                    exit 1
+                  fi
+
+                  # Copy to standardized name
+                  cp "$WASM_PATH" "plugin.wasm"
+
+                  echo "wasm_path=plugin.wasm" >> $GITHUB_OUTPUT
+                  echo "✓ WASM built: $(du -h plugin.wasm | cut -f1)"
+
+            - name: Generate checksum
+              id: checksum
+              run: |
+                  SHA256=$(sha256sum plugin.wasm | cut -d' ' -f1)
+                  echo "$SHA256  plugin.wasm" > plugin.wasm.sha256
+
+                  echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+                  echo "✓ SHA256: $SHA256"
+
+            - name: Create release
+              uses: softprops/action-gh-release@v1
+              with:
+                  name: "${{ steps.parse.outputs.plugin_name }} v${{ steps.parse.outputs.version }}"
+                  body: |
+                      # ${{ steps.parse.outputs.plugin_name }} v${{ steps.parse.outputs.version }}
+
+                      ## Installation
+
+                      This plugin will be automatically downloaded by `repo-weaver` when specified in your `weaver.yaml`:
+
+                      ```yaml
+                      plugins:
+                        ${{ steps.parse.outputs.plugin_name }}:
+                          git: "https://github.com/${{ github.repository }}"
+                          ref: "${{ steps.parse.outputs.tag }}"
+                      ```
+
+                      Or use the default registry (auto-discovery):
+
+                      ```yaml
+                      # No explicit plugin configuration needed
+                      # Just use the ensure type and it will auto-download
+                      ```
+
+                      ## Verification
+
+                      **SHA256:** `${{ steps.checksum.outputs.sha256 }}`
+
+                      ```bash
+                      sha256sum -c plugin.wasm.sha256
+                      ```
+
+                      ## Files
+
+                      - `plugin.wasm` - WASM component (WebAssembly binary)
+                      - `plugin.wasm.sha256` - SHA256 checksum
+                  files: |
+                      plugin.wasm
+                      plugin.wasm.sha256
+                  draft: false
+                  prerelease: false
+                  make_latest: false # Only CLI releases are marked as latest
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Release summary
+              run: |
+                  echo "## ✅ Plugin Released" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "**Plugin:** ${{ steps.parse.outputs.plugin_name }}" >> $GITHUB_STEP_SUMMARY
+                  echo "**Version:** ${{ steps.parse.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+                  echo "**Tag:** ${{ steps.parse.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+                  echo "**SHA256:** \`${{ steps.checksum.outputs.sha256 }}\`" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "Download URL:" >> $GITHUB_STEP_SUMMARY
+                  echo "\`https://github.com/${{ github.repository }}/releases/download/${{ steps.parse.outputs.tag }}/plugin.wasm\`" >> $GITHUB_STEP_SUMMARY

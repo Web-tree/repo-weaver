@@ -1,0 +1,5 @@
+ensures:
+  - type: git.submodule
+    url: "https://github.com/octocat/Hello-World.git"
+    path: "vendor/hello"
+    ref: "master"
