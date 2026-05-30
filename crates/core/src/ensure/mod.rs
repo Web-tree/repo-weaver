@@ -142,6 +142,32 @@ async fn build_known_ensure(
     }
 }
 
+/// Build an `Ensure` for the app-level file primitives. Returns `None` for the
+/// `ensure.npm.*` variants, which stay on the native `ensures::apply_ensure`
+/// JSON path.
+pub fn build_app_ensure(spec: &crate::config::EnsureSpec) -> Option<Box<dyn Ensure>> {
+    use crate::config::EnsureSpec::*;
+    match spec {
+        FileExists { dest, .. } => Some(Box::new(file::EnsureFileExists { dest: dest.clone() })),
+        FileFromTemplate { template, dest } => Some(Box::new(file::EnsureFileFromTemplate {
+            template: template.clone(),
+            dest: dest.clone(),
+        })),
+        FileMdSection {
+            file,
+            selector,
+            content,
+            content_from_template,
+        } => Some(Box::new(file::EnsureFileMdSection {
+            file: file.clone(),
+            selector: selector.clone(),
+            content: content.clone(),
+            content_from_template: content_from_template.clone(),
+        })),
+        NpmScript { .. } | NpmDep { .. } | NpmDevDep { .. } | NpmEngine { .. } => None,
+    }
+}
+
 #[cfg(test)]
 mod ctx_tests {
     use super::*;
@@ -159,5 +185,23 @@ mod ctx_tests {
         };
         assert_eq!(ctx.module_path, PathBuf::from("/tmp/module"));
         assert!(ctx.dry_run);
+    }
+
+    #[test]
+    fn build_app_ensure_handles_file_variants_not_npm() {
+        use crate::config::{EnsureSpec, MdSelector};
+        let md = EnsureSpec::FileMdSection {
+            file: "AGENTS.md".into(),
+            selector: MdSelector::BlockMarker { id: "x".into() },
+            content: Some("hi".into()),
+            content_from_template: None,
+        };
+        assert!(build_app_ensure(&md).is_some());
+        let npm = EnsureSpec::NpmScript {
+            file: "package.json".into(),
+            name: "t".into(),
+            value: "v".into(),
+        };
+        assert!(build_app_ensure(&npm).is_none());
     }
 }

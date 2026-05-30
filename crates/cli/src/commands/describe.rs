@@ -128,6 +128,37 @@ pub async fn run(args: DescribeArgs) -> anyhow::Result<()> {
         }
         println!();
 
+        if !app_config.ensures.is_empty() {
+            println!("App Ensures:");
+            for ensure in &app_config.ensures {
+                use repo_weaver_core::config::EnsureSpec;
+                match ensure {
+                    EnsureSpec::FileExists { dest, .. } => {
+                        println!("  - ensure.file.exists: {dest}")
+                    }
+                    EnsureSpec::FileFromTemplate { template, dest } => {
+                        println!("  - ensure.file.from_template: {template} -> {dest}")
+                    }
+                    EnsureSpec::FileMdSection { file, .. } => {
+                        println!("  - ensure.file.md_section: {file}")
+                    }
+                    EnsureSpec::NpmScript { file, name, .. } => {
+                        println!("  - ensure.npm.script: {name} in {file}")
+                    }
+                    EnsureSpec::NpmDep { file, name, .. } => {
+                        println!("  - ensure.npm.dep: {name} in {file}")
+                    }
+                    EnsureSpec::NpmDevDep { file, name, .. } => {
+                        println!("  - ensure.npm.devDep: {name} in {file}")
+                    }
+                    EnsureSpec::NpmEngine { file, name, .. } => {
+                        println!("  - ensure.npm.engine: {name} in {file}")
+                    }
+                }
+            }
+            println!();
+        }
+
         if !app_config.checks.is_empty() {
             println!("Checks:");
             for check in &app_config.checks {

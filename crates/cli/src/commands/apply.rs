@@ -251,21 +251,9 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
             }
         }
 
-        // App-level ensures (native convergence actions, e.g. ensure.npm.*).
-        // Applied after files/templates so they can mutate generated artefacts.
-        for ensure in &app_config.ensures {
-            if dry_run {
-                info!("Would apply ensure {:?} for {}", ensure, app_config.name);
-            } else {
-                repo_weaver_core::ensures::apply_ensure(&dest_root, ensure)?;
-            }
-        }
-
-        // Module-declared ensures (git submodules, plugin-backed npm/ai, ...).
-        // These are dispatched through the ensure builder, which routes plugin
-        // types to WASM plugins resolved via `plugin_resolver`.
-
         // Build the per-app render context (mirrors the templates loop).
+        // Constructed here so BOTH the app-level and module-declared ensures
+        // loops can share a single EnsureContext.
         let mut app_tera_context = tera_context.clone();
         let input_ctx = build_context(&app.inputs)?;
         app_tera_context.extend(input_ctx);
@@ -276,6 +264,29 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
             module_path: module_path.clone(),
             tera_context: app_tera_context,
         };
+
+        // App-level ensures: file.* via the Ensure trait (with module/template
+        // context), npm.* via the native JSON path.
+        // Applied after files/templates so they can mutate generated artefacts.
+        for ensure in &app_config.ensures {
+            if let Some(built) = repo_weaver_core::ensure::build_app_ensure(ensure) {
+                let plan = built.plan(&ensure_ctx)?;
+                if dry_run {
+                    info!("Would ensure: {}", plan.description);
+                } else {
+                    info!("Ensuring: {}", plan.description);
+                    built.execute(&ensure_ctx)?;
+                }
+            } else if dry_run {
+                info!("Would apply ensure {:?} for {}", ensure, app_config.name);
+            } else {
+                repo_weaver_core::ensures::apply_ensure(&dest_root, ensure)?;
+            }
+        }
+
+        // Module-declared ensures (git submodules, plugin-backed npm/ai, ...).
+        // These are dispatched through the ensure builder, which routes plugin
+        // types to WASM plugins resolved via `plugin_resolver`.
         for ensure_config in &manifest.ensures {
             let ensure =
                 repo_weaver_core::ensure::build_ensure(ensure_config, Some(&plugin_resolver))
