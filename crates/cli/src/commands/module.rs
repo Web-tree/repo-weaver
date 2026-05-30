@@ -108,21 +108,31 @@ fn run_add(args: AddArgs) -> anyhow::Result<()> {
     let mut config = WeaverConfig::load(config_path)?;
 
     let name = args.name.clone().unwrap_or_else(|| derive_name(&args.source));
-    if config.modules.iter().any(|m| m.name == name) {
-        anyhow::bail!("Module '{}' already exists in weaver.yaml", name);
-    }
+
+    // Idempotent: if the module already exists, update it in place; otherwise
+    // append a new entry. Resolve/pin and file writes happen the same way in
+    // both cases (below the branch).
+    let is_update = match config.modules.iter_mut().find(|m| m.name == name) {
+        Some(existing) => {
+            existing.source = args.source.clone();
+            existing.r#ref = args.r#ref.clone();
+            true
+        }
+        None => {
+            config.modules.push(ModuleConfig {
+                name: name.clone(),
+                source: args.source.clone(),
+                r#ref: args.r#ref.clone(),
+                path: None,
+            });
+            false
+        }
+    };
 
     // Resolve + pin the commit (also clones into the global store).
     let mut resolver = ModuleResolver::new(None)?;
     resolver.resolve(&name, &args.source, &args.r#ref)?;
 
-    // Append the module entry.
-    config.modules.push(ModuleConfig {
-        name: name.clone(),
-        source: args.source.clone(),
-        r#ref: args.r#ref.clone(),
-        path: None,
-    });
     let f = std::fs::File::create(config_path)?;
     serde_yml::to_writer(f, &config)?;
 
@@ -142,7 +152,11 @@ fn run_add(args: AddArgs) -> anyhow::Result<()> {
     }
     std::fs::write(lock_path, serde_yml::to_string(&lock)?)?;
 
-    println!("Added module '{}' ({} @ {})", name, args.source, args.r#ref);
+    if is_update {
+        println!("Updated module '{}' ({} @ {})", name, args.source, args.r#ref);
+    } else {
+        println!("Added module '{}' ({} @ {})", name, args.source, args.r#ref);
+    }
     println!("Run 'rw plan' to preview what will converge.");
     Ok(())
 }
