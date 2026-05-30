@@ -108,6 +108,23 @@ impl std::fmt::Display for StalePlan {
 
 impl std::error::Error for StalePlan {}
 
+/// Render planned changes as a human-readable list. Glyph by action:
+/// `+` create/add, `~` update/change, `-` remove, `?` drift, else ` `.
+pub fn render_changes(changes: &[PlannedChange]) -> String {
+    let mut out = String::new();
+    for c in changes {
+        let glyph = match c.action.as_str() {
+            "create" | "add" => '+',
+            "update" | "change" => '~',
+            "remove" | "delete" => '-',
+            "drift" => '?',
+            _ => ' ',
+        };
+        out.push_str(&format!("{glyph} {} {}\n", c.action, c.path));
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -211,5 +228,41 @@ mod tests {
         assert!(msg.contains("retention_days"));
         assert!(msg.contains("planned=30"));
         assert!(msg.contains("actual=90"));
+    }
+}
+
+#[cfg(test)]
+mod render_tests {
+    use super::*;
+
+    #[test]
+    fn renders_change_lines_with_action_prefix() {
+        let changes = vec![
+            PlannedChange {
+                action: "create".into(),
+                path: "AGENTS.md#Skills".into(),
+                preview: None,
+            },
+            PlannedChange {
+                action: "update".into(),
+                path: "package.json".into(),
+                preview: None,
+            },
+            PlannedChange {
+                action: "drift".into(),
+                path: "app/settings.yaml".into(),
+                preview: None,
+            },
+            PlannedChange {
+                action: "remove".into(),
+                path: "stale.txt".into(),
+                preview: None,
+            },
+        ];
+        let rendered = render_changes(&changes);
+        assert!(rendered.contains("+ create AGENTS.md#Skills"));
+        assert!(rendered.contains("~ update package.json"));
+        assert!(rendered.contains("? drift app/settings.yaml"));
+        assert!(rendered.contains("- remove stale.txt"));
     }
 }

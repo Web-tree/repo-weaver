@@ -36,16 +36,19 @@ pub struct ApplyArgs {
 }
 
 pub async fn run(args: ApplyArgs) -> anyhow::Result<()> {
-    execute(args, false).await
+    let _ = execute(args, false).await?;
+    Ok(())
 }
 
-pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
+pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<usize> {
     info!(
         "Running {} (strategy: {}, auto-approve: {})...",
         if dry_run { "plan" } else { "apply" },
         args.strategy,
         args.auto_approve
     );
+
+    let mut planned_changes: Vec<repo_weaver_core::plan::PlannedChange> = Vec::new();
 
     // 1. Load config
     let config_path = Path::new("weaver.yaml");
@@ -149,28 +152,31 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                     {
                         let current_chk = calculate_checksum(&dest_path)?;
                         if file_state.checksum != current_chk {
-                            if args.strategy == "stop" {
-                                if dry_run {
-                                    info!(
-                                        "Drift detected for {:?}. Plan would fail.",
-                                        dest_path
-                                    );
-                                }
+                            if dry_run {
+                                planned_changes.push(repo_weaver_core::plan::PlannedChange {
+                                    action: "drift".into(),
+                                    path: dest_path.display().to_string(),
+                                    preview: None,
+                                });
+                                info!("Drift detected for {:?}.", dest_path);
+                                continue; // drifted managed file: count once as drift, skip the create push
+                            } else if args.strategy == "stop" {
                                 anyhow::bail!(
                                     "Drift detected for {:?}. Use --strategy overwrite to force.",
                                     dest_path
                                 );
-                            } else if dry_run {
-                                info!(
-                                    "Drift detected for {:?}. Plan would overwrite.",
-                                    dest_path
-                                );
                             }
+                            // !dry_run && strategy != "stop" -> fall through and overwrite below
                         }
                     }
 
                     // Write File
                     if dry_run {
+                        planned_changes.push(repo_weaver_core::plan::PlannedChange {
+                            action: "create".into(),
+                            path: dest_path.display().to_string(),
+                            preview: None,
+                        });
                         info!("Would copy {:?} to {:?}", entry.path(), dest_path);
                     } else {
                         Engine::ensure_file_copy(entry.path(), &dest_path)?;
@@ -184,8 +190,7 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
             }
         }
 
-        // Templates Processing (Similar logic can be added here, omitting for brevity in this step)
-        // ... (existing template logic adapted to manual write/state update) ...
+        // Templates Processing
         let templates_src = module_path.join("templates");
         if templates_src.exists() {
             for entry in walkdir::WalkDir::new(&templates_src) {
@@ -213,27 +218,30 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                     {
                         let current_chk = calculate_checksum(&dest_path)?;
                         if file_state.checksum != current_chk {
-                            if args.strategy == "stop" {
-                                if dry_run {
-                                    info!(
-                                        "Drift detected for {:?}. Plan would fail.",
-                                        dest_path
-                                    );
-                                }
+                            if dry_run {
+                                planned_changes.push(repo_weaver_core::plan::PlannedChange {
+                                    action: "drift".into(),
+                                    path: dest_path.display().to_string(),
+                                    preview: None,
+                                });
+                                info!("Drift detected for {:?}.", dest_path);
+                                continue; // drifted managed file: count once as drift, skip the create push
+                            } else if args.strategy == "stop" {
                                 anyhow::bail!(
                                     "Drift detected for {:?}. Use --strategy overwrite to force.",
                                     dest_path
                                 );
-                            } else if dry_run {
-                                info!(
-                                    "Drift detected for {:?}. Plan would overwrite.",
-                                    dest_path
-                                );
                             }
+                            // !dry_run && strategy != "stop" -> fall through and overwrite below
                         }
                     }
 
                     if dry_run {
+                        planned_changes.push(repo_weaver_core::plan::PlannedChange {
+                            action: "create".into(),
+                            path: dest_path.display().to_string(),
+                            preview: None,
+                        });
                         info!("Would render {:?} to {:?}", entry.path(), dest_path);
                     } else {
                         let rendered = template_engine.render(&content, &context)?;
@@ -272,12 +280,24 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
             if let Some(built) = repo_weaver_core::ensure::build_app_ensure(ensure) {
                 let plan = built.plan(&ensure_ctx)?;
                 if dry_run {
+                    if !plan.actions.is_empty() {
+                        planned_changes.push(repo_weaver_core::plan::PlannedChange {
+                            action: "update".into(),
+                            path: plan.description.clone(),
+                            preview: None,
+                        });
+                    }
                     info!("Would ensure: {}", plan.description);
                 } else {
                     info!("Ensuring: {}", plan.description);
                     built.execute(&ensure_ctx)?;
                 }
             } else if dry_run {
+                planned_changes.push(repo_weaver_core::plan::PlannedChange {
+                    action: "update".into(),
+                    path: format!("{:?}", ensure),
+                    preview: None,
+                });
                 info!("Would apply ensure {:?} for {}", ensure, app_config.name);
             } else {
                 repo_weaver_core::ensures::apply_ensure(&dest_root, ensure)?;
@@ -293,6 +313,13 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
                     .await?;
             let plan = ensure.plan(&ensure_ctx)?;
             if dry_run {
+                if !plan.actions.is_empty() {
+                    planned_changes.push(repo_weaver_core::plan::PlannedChange {
+                        action: "update".into(),
+                        path: plan.description.clone(),
+                        preview: None,
+                    });
+                }
                 info!("Would ensure: {}", plan.description);
             } else {
                 info!("Ensuring: {}", plan.description);
@@ -338,10 +365,14 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
         state.save(state_path)?;
         info!("Apply complete.");
     } else {
+        if !planned_changes.is_empty() {
+            print!("{}", repo_weaver_core::plan::render_changes(&planned_changes));
+            info!("{} change(s) to converge.", planned_changes.len());
+        }
         info!("Plan complete. No changes made.");
     }
 
-    Ok(())
+    Ok(planned_changes.len())
 }
 
 /// Flatten per-app inputs into the `<app>.<input>` keys used by saved plans.
