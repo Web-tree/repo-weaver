@@ -195,6 +195,32 @@ pub enum EnsureSpec {
     },
     #[serde(rename = "ensure.file.from_template")]
     FileFromTemplate { template: String, dest: String },
+    #[serde(rename = "ensure.file.md_section")]
+    FileMdSection {
+        file: String,
+        selector: MdSelector,
+        #[serde(default)]
+        content: Option<String>,
+        #[serde(default)]
+        content_from_template: Option<String>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum MdSelector {
+    Heading {
+        path: Vec<String>,
+        #[serde(default = "default_heading_depth")]
+        depth: usize,
+    },
+    BlockMarker {
+        id: String,
+    },
+}
+
+fn default_heading_depth() -> usize {
+    2
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
