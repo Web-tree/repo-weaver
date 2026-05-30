@@ -41,6 +41,7 @@ impl Ensure for EnsureNpmScript {
 mod tests {
     use super::*;
     use std::fs;
+    use std::path::PathBuf;
     use tempfile::TempDir;
 
     #[test]
@@ -59,6 +60,8 @@ mod tests {
         let ctx = EnsureContext {
             app_path: dir.path().to_path_buf(),
             dry_run: false,
+            module_path: PathBuf::from("."),
+            tera_context: tera::Context::new(),
         };
 
         // Plan describes the change without mutating.
@@ -88,6 +91,8 @@ mod tests {
         let ctx = EnsureContext {
             app_path: dir.path().to_path_buf(),
             dry_run: true,
+            module_path: PathBuf::from("."),
+            tera_context: tera::Context::new(),
         };
         ensure.execute(&ctx).unwrap();
 

@@ -264,9 +264,17 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
         // Module-declared ensures (git submodules, plugin-backed npm/ai, ...).
         // These are dispatched through the ensure builder, which routes plugin
         // types to WASM plugins resolved via `plugin_resolver`.
+
+        // Build the per-app render context (mirrors the templates loop).
+        let mut app_tera_context = tera_context.clone();
+        let input_ctx = build_context(&app.inputs)?;
+        app_tera_context.extend(input_ctx);
+
         let ensure_ctx = repo_weaver_core::ensure::EnsureContext {
             app_path: dest_root.clone(),
             dry_run,
+            module_path: module_path.clone(),
+            tera_context: app_tera_context,
         };
         for ensure_config in &manifest.ensures {
             let ensure =
