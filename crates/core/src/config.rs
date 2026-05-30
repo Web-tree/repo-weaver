@@ -193,6 +193,8 @@ pub enum EnsureSpec {
         #[serde(default)]
         template: Option<String>,
     },
+    #[serde(rename = "ensure.file.from_template")]
+    FileFromTemplate { template: String, dest: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
