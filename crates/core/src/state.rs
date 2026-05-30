@@ -31,6 +31,14 @@ impl Default for State {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OwnedRegion {
+    /// Region identifier (block-marker id, or `heading:<path>`).
+    pub id: String,
+    /// SHA-256 of the rendered content rw last wrote into this region.
+    pub checksum: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileState {
     pub checksum: String,
@@ -40,6 +48,8 @@ pub struct FileState {
     pub managed: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub last_updated: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub owned_regions: Vec<OwnedRegion>,
 }
 
 impl FileState {
@@ -49,6 +59,7 @@ impl FileState {
             source: None,
             managed: true,
             last_updated: None,
+            owned_regions: Vec::new(),
         }
     }
 
@@ -59,6 +70,11 @@ impl FileState {
 
     pub fn with_last_updated(mut self, ts: impl Into<String>) -> Self {
         self.last_updated = Some(ts.into());
+        self
+    }
+
+    pub fn with_owned_regions(mut self, regions: Vec<OwnedRegion>) -> Self {
+        self.owned_regions = regions;
         self
     }
 }
@@ -212,5 +228,21 @@ files:
         fs::write(&p, b"world").unwrap();
         let h2 = calculate_checksum(&p).unwrap();
         assert_ne!(h1, h2);
+    }
+
+    #[test]
+    fn filestate_defaults_to_no_owned_regions_and_roundtrips() {
+        let fs = FileState::new("abc".into());
+        assert!(fs.owned_regions.is_empty());
+
+        let region = OwnedRegion {
+            id: "recent-changes".into(),
+            checksum: "deadbeef".into(),
+        };
+        let fs2 = FileState::new("abc".into()).with_owned_regions(vec![region.clone()]);
+        let yaml = serde_yml::to_string(&fs2).unwrap();
+        let back: FileState = serde_yml::from_str(&yaml).unwrap();
+        assert_eq!(back.owned_regions.len(), 1);
+        assert_eq!(back.owned_regions[0].id, "recent-changes");
     }
 }
