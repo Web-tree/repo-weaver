@@ -3,6 +3,7 @@ pub mod config;
 pub mod engine;
 pub mod ensure;
 pub mod ensures;
+pub mod json_merge;
 pub mod lockfile;
 pub mod logging;
 pub mod module;
