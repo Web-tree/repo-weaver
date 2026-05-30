@@ -1,6 +1,8 @@
 use clap::{Args, Subcommand};
 use comfy_table::Table;
-use repo_weaver_core::config::WeaverConfig;
+use repo_weaver_core::config::{ModuleConfig, WeaverConfig};
+use repo_weaver_core::lockfile::Lockfile;
+use repo_weaver_core::module::ModuleResolver;
 use serde_json::json;
 use std::path::{Path, PathBuf};
 
@@ -16,6 +18,20 @@ pub enum ModuleCommands {
     List(ListArgs),
     /// Update a module's ref
     Update(UpdateArgs),
+    /// Add a module to weaver.yaml and pin it in weaver.lock
+    Add(AddArgs),
+}
+
+#[derive(Args)]
+pub struct AddArgs {
+    /// Module source (git URL or local path)
+    pub source: String,
+    /// Module name (defaults to the repo name derived from the source)
+    #[arg(long)]
+    pub name: Option<String>,
+    /// Git ref (branch, tag, or commit)
+    #[arg(long, default_value = "main")]
+    pub r#ref: String,
 }
 
 #[derive(Args)]
@@ -41,6 +57,7 @@ pub fn execute(args: ModuleArgs) -> anyhow::Result<()> {
     match args.command {
         ModuleCommands::List(args) => run_list(args),
         ModuleCommands::Update(args) => run_update(args),
+        ModuleCommands::Add(args) => run_add(args),
     }
 }
 
@@ -73,6 +90,60 @@ fn run_list(args: ListArgs) -> anyhow::Result<()> {
         println!("{table}");
     }
 
+    Ok(())
+}
+
+fn derive_name(source: &str) -> String {
+    source
+        .trim_end_matches('/')
+        .rsplit('/')
+        .next()
+        .unwrap_or("module")
+        .trim_end_matches(".git")
+        .to_string()
+}
+
+fn run_add(args: AddArgs) -> anyhow::Result<()> {
+    let config_path = Path::new("weaver.yaml");
+    let mut config = WeaverConfig::load(config_path)?;
+
+    let name = args.name.clone().unwrap_or_else(|| derive_name(&args.source));
+    if config.modules.iter().any(|m| m.name == name) {
+        anyhow::bail!("Module '{}' already exists in weaver.yaml", name);
+    }
+
+    // Resolve + pin the commit (also clones into the global store).
+    let mut resolver = ModuleResolver::new(None)?;
+    resolver.resolve(&name, &args.source, &args.r#ref)?;
+
+    // Append the module entry.
+    config.modules.push(ModuleConfig {
+        name: name.clone(),
+        source: args.source.clone(),
+        r#ref: args.r#ref.clone(),
+        path: None,
+    });
+    let f = std::fs::File::create(config_path)?;
+    serde_yml::to_writer(f, &config)?;
+
+    // Persist the module lock (merge into existing weaver.lock if present).
+    let lock_path = Path::new("weaver.lock");
+    let mut lock = if lock_path.exists() {
+        serde_yml::from_str::<Lockfile>(&std::fs::read_to_string(lock_path)?)?
+    } else {
+        Lockfile {
+            version: "1".to_string(),
+            ..Default::default()
+        }
+    };
+    let resolved = resolver.take_lock();
+    if let Some(ml) = resolved.modules.get(&name) {
+        lock.modules.insert(name.clone(), ml.clone());
+    }
+    std::fs::write(lock_path, serde_yml::to_string(&lock)?)?;
+
+    println!("Added module '{}' ({} @ {})", name, args.source, args.r#ref);
+    println!("Run 'rw plan' to preview what will converge.");
     Ok(())
 }
 

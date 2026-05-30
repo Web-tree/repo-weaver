@@ -1,3 +1,4 @@
+mod add_module;
 mod apply;
 mod check;
 pub mod common;
