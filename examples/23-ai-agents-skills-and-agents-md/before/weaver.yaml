@@ -17,13 +17,13 @@ apps:
     ensures:
       # Whole-file skills — ordinary template rendering.
       - type: "ensure.file.from_template"
-        template: ".claude/skills/plan-change/SKILL.md.j2"
+        template: "templates/.claude/skills/plan-change/SKILL.md.j2"
         dest: ".claude/skills/plan-change/SKILL.md"
       - type: "ensure.file.from_template"
-        template: ".claude/skills/write-tests/SKILL.md.j2"
+        template: "templates/.claude/skills/write-tests/SKILL.md.j2"
         dest: ".claude/skills/write-tests/SKILL.md"
       - type: "ensure.file.from_template"
-        template: ".claude/skills/review-diff/SKILL.md.j2"
+        template: "templates/.claude/skills/review-diff/SKILL.md.j2"
         dest: ".claude/skills/review-diff/SKILL.md"
 
       # Managed region of an existing file — heading selector.

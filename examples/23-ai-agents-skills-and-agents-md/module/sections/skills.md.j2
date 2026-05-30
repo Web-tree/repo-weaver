@@ -1,12 +1,11 @@
-{% set catalogue = {
-  "plan-change":  "Outline the intended change before editing any code.",
-  "write-tests":  "Draft a failing test that expresses the desired new behaviour.",
-  "review-diff":  "Critique the staged diff before it is committed."
-} %}
 The following skills are installed under `.claude/skills/` and are available to any Claude Code session in this repository:
 
 {% for skill in skills %}
-- **`{{ skill }}`** — {{ catalogue[skill] }}
+{% if skill == "plan-change" %}- **`{{ skill }}`** — Outline the intended change before editing any code.
+{% elif skill == "write-tests" %}- **`{{ skill }}`** — Draft a failing test that expresses the desired new behaviour.
+{% elif skill == "review-diff" %}- **`{{ skill }}`** — Critique the staged diff before it is committed.
+{% else %}- **`{{ skill }}`**
+{% endif %}
 {% endfor %}
 
 ### Invocation order

@@ -15,15 +15,21 @@ apps:
         - "Switched request validation from ad-hoc checks to zod schemas."
         - "Added a nightly integration job against the staging database."
     ensures:
+      # Whole-file skills — ordinary template rendering.
       - type: "ensure.file.from_template"
-        template: ".claude/skills/plan-change/SKILL.md.j2"
+        template: "templates/.claude/skills/plan-change/SKILL.md.j2"
         dest: ".claude/skills/plan-change/SKILL.md"
       - type: "ensure.file.from_template"
-        template: ".claude/skills/write-tests/SKILL.md.j2"
+        template: "templates/.claude/skills/write-tests/SKILL.md.j2"
         dest: ".claude/skills/write-tests/SKILL.md"
       - type: "ensure.file.from_template"
-        template: ".claude/skills/review-diff/SKILL.md.j2"
+        template: "templates/.claude/skills/review-diff/SKILL.md.j2"
         dest: ".claude/skills/review-diff/SKILL.md"
+
+      # Managed region of an existing file — heading selector.
+      # Injects/updates the `## Skills` section without touching anything else
+      # in AGENTS.md (including the pre-existing `# acme-api` intro and the
+      # `## Manual Additions` block below it).
       - type: "ensure.file.md_section"
         file: "AGENTS.md"
         selector:
@@ -31,6 +37,11 @@ apps:
           path: ["Skills"]
           depth: 2
         content_from_template: "sections/skills.md.j2"
+
+      # Managed region of the same file — block-marker selector.
+      # Volatile content (recent changes) that doesn't need its own heading;
+      # the marker lets it sit anywhere in the file without disrupting
+      # heading structure.
       - type: "ensure.file.md_section"
         file: "AGENTS.md"
         selector:
