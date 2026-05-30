@@ -73,12 +73,12 @@ fn print_json(config: &WeaverConfig, args: &ListArgs) -> anyhow::Result<()> {
     let mut tasks_owned = Vec::new();
     if !args.apps_only {
         // Logic for task listing
-        let resolver = ModuleResolver::new(None)?;
+        let mut resolver = ModuleResolver::new(None)?;
         let module_map: HashMap<_, _> = config.modules.iter().map(|m| (&m.name, m)).collect();
 
         for app in &config.apps {
             if let Some(mod_config) = module_map.get(&app.module) {
-                match resolver.resolve(&mod_config.source, &mod_config.r#ref) {
+                match resolver.resolve(&mod_config.name, &mod_config.source, &mod_config.r#ref) {
                     Ok(path) => {
                         let manifest_path = path.join("weaver.module.yaml");
                         if manifest_path.exists() {
@@ -124,13 +124,13 @@ fn print_table(config: &WeaverConfig, args: &ListArgs) -> anyhow::Result<()> {
     }
 
     if !args.apps_only {
-        let resolver = ModuleResolver::new(None)?;
+        let mut resolver = ModuleResolver::new(None)?;
         let module_map: HashMap<_, _> = config.modules.iter().map(|m| (&m.name, m)).collect();
         let mut tasks = Vec::new();
 
         for app in &config.apps {
             if let Some(mod_config) = module_map.get(&app.module) {
-                if let Ok(path) = resolver.resolve(&mod_config.source, &mod_config.r#ref) {
+                if let Ok(path) = resolver.resolve(&mod_config.name, &mod_config.source, &mod_config.r#ref) {
                     let manifest_path = path.join("weaver.module.yaml");
                     if manifest_path.exists() {
                         if let Ok(manifest) = ModuleManifest::load(&manifest_path) {

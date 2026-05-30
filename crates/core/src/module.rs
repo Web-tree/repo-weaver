@@ -1,60 +1,112 @@
-use crate::lockfile::Lockfile;
+use crate::lockfile::{Lockfile, ModuleLock};
 use repo_weaver_ops::git;
 use std::path::PathBuf;
 
 pub struct ModuleResolver {
     cache_dir: PathBuf,
-    lockfile: Option<Lockfile>,
+    lockfile: Lockfile,
 }
 
 impl ModuleResolver {
-    pub fn new(lockfile: Option<Lockfile>) -> anyhow::Result<Self> {
+    pub fn new(existing: Option<Lockfile>) -> anyhow::Result<Self> {
         let home =
             home::home_dir().ok_or_else(|| anyhow::anyhow!("Could not find home directory"))?;
         let cache_dir = home.join(".rw").join("store");
-        Ok(Self {
-            cache_dir,
-            lockfile,
-        })
+        let mut lockfile = existing.unwrap_or_default();
+        if lockfile.version.is_empty() {
+            lockfile.version = "1".to_string();
+        }
+        Ok(Self { cache_dir, lockfile })
     }
 
-    pub fn resolve(&self, source: &str, ref_: &str) -> anyhow::Result<PathBuf> {
-        // 1. Check Lockfile Integrity
-        if let Some(lock) = &self.lockfile {
-            if let Some(module_lock) = lock.modules.get(source) {
-                // Verify ref matches lock
-                if module_lock.r#ref != ref_ {
-                    // Start drift or update? Strict mode says abort?
-                    // For now, warn or error?
-                    // Lockfile Integrity Check rule: "System MUST abort ... if weaver.lock checksums do not match downloaded content"
-                    // Here we check ref match first.
-                }
-            }
-        }
+    /// Resolve `source@ref` to a local path, pinning the ref to a concrete
+    /// commit. The cache is keyed by the resolved commit so a moving branch
+    /// re-resolves correctly. Records a `ModuleLock` keyed by `name`.
+    pub fn resolve(&mut self, name: &str, source: &str, ref_: &str) -> anyhow::Result<PathBuf> {
+        // Normalize bare local paths to absolute paths for git transport.
+        // A "local path" is one that has no URL scheme (no "://") and exists on disk.
+        // We canonicalize relative to CWD so that git ls-remote / clone work
+        // regardless of the working directory of the calling process.
+        let transport_url: String = if !source.contains("://") {
+            let abs = std::path::Path::new(source)
+                .canonicalize()
+                .map_err(|e| anyhow::anyhow!("Cannot resolve local module path '{}': {}", source, e))?;
+            abs.to_string_lossy().into_owned()
+        } else {
+            source.to_string()
+        };
 
+        let commit = git::rev_parse_remote(&transport_url, ref_)?;
+
+        // Cache dir is keyed by the ORIGINAL `source` string (not the
+        // normalized transport URL) — intentional. Different spellings of the
+        // same local path (e.g. `../module` vs an absolute path) may cache
+        // separately, which keeps the key stable to what the user wrote.
         let folder_name = urlencoding::encode(source);
-        let path = self.cache_dir.join(folder_name.as_ref()).join(ref_);
+        let path = self.cache_dir.join(folder_name.as_ref()).join(&commit);
 
         if !path.exists() {
-            // Offline Fallback check:
-            // "System MUST auto-fallback to the global cache with a warning if the upstream source is unreachable."
-            // Implicit: git clone handles network. If it fails, we can't fallback if the folder doesn't exist locally!
-            // Fallback implies "use what we have even if we can't update"?
-            // But if path !exists, we don't have it.
-            // So we try valid clone.
             std::fs::create_dir_all(&path)?;
-            if let Err(e) = git::clone(source, ref_, &path) {
-                // If clone fails and we don't have it, we assume we can't proceed.
-                // If we had it (path exists), we would skip clone.
-                // So fallback applies to "Create App from Module" -> Resolve Module.
-                // If module is already resolved (cached), we use it.
-                // We are checking `!path.exists()`. So if it exists, we stick to it (implicit offline use).
-                // If it doesn't exist, we MUST clone. If clone fails, we fail.
+            if let Err(e) = git::clone(&transport_url, &commit, &path) {
                 std::fs::remove_dir_all(&path).ok();
                 return Err(e);
             }
         }
 
+        self.lockfile.modules.insert(
+            name.to_string(),
+            ModuleLock {
+                source: source.to_string(),
+                r#ref: ref_.to_string(),
+                resolved_commit: commit,
+                checksum: String::new(),
+            },
+        );
+
         Ok(path)
+    }
+
+    /// The accumulated lockfile (call after resolving all modules).
+    pub fn take_lock(&self) -> Lockfile {
+        self.lockfile.clone()
+    }
+}
+
+#[cfg(test)]
+mod resolve_tests {
+    use super::*;
+    use std::process::Command;
+    use tempfile::tempdir;
+
+    fn make_repo(dir: &std::path::Path) -> String {
+        std::fs::create_dir_all(dir).unwrap();
+        std::fs::write(dir.join("file.txt"), "hello").unwrap();
+        for args in [
+            vec!["init"],
+            vec!["config", "user.email", "t@t.local"],
+            vec!["config", "user.name", "T"],
+            vec!["add", "."],
+            vec!["commit", "-m", "init"],
+            vec!["tag", "v1"],
+        ] {
+            Command::new("git").args(&args).current_dir(dir).output().unwrap();
+        }
+        format!("file://{}", dir.display())
+    }
+
+    #[test]
+    fn resolve_caches_by_commit_and_records_lock() {
+        let tmp = tempdir().unwrap();
+        unsafe { std::env::set_var("HOME", tmp.path()) };
+        let url = make_repo(&tmp.path().join("src"));
+
+        let mut resolver = ModuleResolver::new(None).unwrap();
+        let path = resolver.resolve("modname", &url, "v1").unwrap();
+
+        assert!(path.join("file.txt").exists());
+        let lock = resolver.take_lock();
+        let entry = lock.modules.get("modname").expect("module lock recorded");
+        assert_eq!(entry.resolved_commit.len(), 40);
+        assert!(path.to_string_lossy().contains(&entry.resolved_commit));
     }
 }

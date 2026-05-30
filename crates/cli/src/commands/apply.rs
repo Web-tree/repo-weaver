@@ -68,7 +68,7 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
     let mut state = State::load(state_path)?;
 
     // 2. Init components
-    let resolver = ModuleResolver::new(None)?;
+    let mut resolver = ModuleResolver::new(None)?;
     let template_engine = TemplateEngine::new()?;
     let mut tera_context = tera::Context::new();
 
@@ -102,7 +102,7 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
             .find(|m| m.name == app_config.module)
             .ok_or_else(|| anyhow::anyhow!("Module '{}' not found", app_config.module))?;
 
-        let module_path = resolver.resolve(&module_config.source, &module_config.r#ref)?;
+        let module_path = resolver.resolve(&module_config.name, &module_config.source, &module_config.r#ref)?;
         let manifest_path = module_path.join("weaver.module.yaml");
         let manifest = ModuleManifest::load(&manifest_path)?;
 
@@ -295,6 +295,32 @@ pub async fn execute(args: ApplyArgs, dry_run: bool) -> anyhow::Result<()> {
     if !resolved_plugins.is_empty() && !dry_run {
         let lockfile_path = Path::new("weaver.lock");
         plugin_resolver.update_lockfile(lockfile_path, &resolved_plugins)?;
+    }
+
+    // Persist accumulated module locks (commit pins) into weaver.lock,
+    // merging into any existing on-disk lockfile so plugin locks survive.
+    if !dry_run {
+        let module_lock = resolver.take_lock();
+        if !module_lock.modules.is_empty() {
+            let lockfile_path = Path::new("weaver.lock");
+            let mut on_disk = if lockfile_path.exists() {
+                serde_yml::from_str::<repo_weaver_core::lockfile::Lockfile>(
+                    &std::fs::read_to_string(lockfile_path)?,
+                )?
+            } else {
+                repo_weaver_core::lockfile::Lockfile {
+                    version: "1".to_string(),
+                    ..Default::default()
+                }
+            };
+            for (k, v) in module_lock.modules {
+                on_disk.modules.insert(k, v);
+            }
+            if on_disk.version.is_empty() {
+                on_disk.version = "1".to_string();
+            }
+            std::fs::write(lockfile_path, serde_yml::to_string(&on_disk)?)?;
+        }
     }
 
     if !dry_run {

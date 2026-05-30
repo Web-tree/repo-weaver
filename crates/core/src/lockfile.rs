@@ -13,6 +13,11 @@ pub struct Lockfile {
 pub struct ModuleLock {
     pub source: String,
     pub r#ref: String,
+    /// Concrete object SHA the symbolic `ref` resolved to (ref pinning).
+    /// A commit for branches, lightweight tags, and SHAs; a tag object SHA
+    /// for annotated tags (clone+checkout still lands on the right commit).
+    #[serde(default)]
+    pub resolved_commit: String,
     pub checksum: String,
 }
 

@@ -46,8 +46,8 @@ pub async fn run(args: RunArgs) -> anyhow::Result<()> {
         .ok_or_else(|| anyhow::anyhow!("Module '{}' not found", app_config.module))?;
 
     // Resolve module
-    let resolver = ModuleResolver::new(None)?;
-    let module_path = resolver.resolve(&module_config.source, &module_config.r#ref)?;
+    let mut resolver = ModuleResolver::new(None)?;
+    let module_path = resolver.resolve(&module_config.name, &module_config.source, &module_config.r#ref)?;
 
     // Load manifest
     let manifest_path = module_path.join("weaver.module.yaml");
