@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::path::PathBuf;
 
+pub mod file;
 pub mod git;
 pub mod npm;
 pub mod plugin_wrapper;
@@ -15,26 +16,6 @@ pub struct EnsureContext {
     /// Tera rendering context (resolved inputs + `secrets.*`) for
     /// template-backed ensures.
     pub tera_context: tera::Context,
-}
-
-#[cfg(test)]
-mod ctx_tests {
-    use super::*;
-    use std::path::PathBuf;
-
-    #[test]
-    fn context_carries_module_path_and_tera_context() {
-        let mut tc = tera::Context::new();
-        tc.insert("project_name", "acme-api");
-        let ctx = EnsureContext {
-            app_path: PathBuf::from("/tmp/app"),
-            dry_run: true,
-            module_path: PathBuf::from("/tmp/module"),
-            tera_context: tc,
-        };
-        assert_eq!(ctx.module_path, PathBuf::from("/tmp/module"));
-        assert!(ctx.dry_run);
-    }
 }
 
 pub struct EnsurePlan {
@@ -158,5 +139,25 @@ async fn build_known_ensure(
                 config_json,
             )))
         }
+    }
+}
+
+#[cfg(test)]
+mod ctx_tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn context_carries_module_path_and_tera_context() {
+        let mut tc = tera::Context::new();
+        tc.insert("project_name", "acme-api");
+        let ctx = EnsureContext {
+            app_path: PathBuf::from("/tmp/app"),
+            dry_run: true,
+            module_path: PathBuf::from("/tmp/module"),
+            tera_context: tc,
+        };
+        assert_eq!(ctx.module_path, PathBuf::from("/tmp/module"));
+        assert!(ctx.dry_run);
     }
 }

@@ -187,6 +187,12 @@ pub enum EnsureSpec {
         name: String,
         version: String,
     },
+    #[serde(rename = "ensure.file.exists")]
+    FileExists {
+        dest: String,
+        #[serde(default)]
+        template: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

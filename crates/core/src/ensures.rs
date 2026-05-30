@@ -33,6 +33,12 @@ pub fn apply_ensure(app_root: &Path, ensure: &EnsureSpec) -> anyhow::Result<()> 
             name,
             Value::String(version.clone()),
         ),
+        // Non-npm variants (ensure.file.*) are handled via the Ensure trait
+        // dispatch (see ensure::build_app_ensure), not this native npm path.
+        _ => anyhow::bail!(
+            "apply_ensure only handles ensure.npm.* variants; {:?} must route via build_app_ensure",
+            ensure
+        ),
     }
 }
 
