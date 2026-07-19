@@ -1,0 +1,21 @@
+# Module: tmux-claude-window-rename
+#
+# Keeps a managed block inside a tmux config that makes the tmux window name
+# (#W, shown in the status bar) track the terminal title (#T) that the running
+# program publishes. Claude Code sets its current task / session name as the
+# terminal title via an OSC escape sequence; tmux records it as the pane title
+# but, by default, does not use it for the window name. This module converges
+# the two or three lines that close that gap.
+#
+# The managed region lives between `# rw:section` / `# rw:endsection` markers,
+# so the rest of the user's hand-written tmux config is preserved byte-for-byte.
+# See README.md for the operational reload step (`tmux source-file`).
+inputs:
+  set_titles:
+    type: bool
+    default: true
+    description: "Also enable `set-titles` so the OUTER terminal-emulator titlebar reflects the pane title (#T), in addition to the in-tmux window name."
+  strip_status_glyph:
+    type: bool
+    default: true
+    description: "Strip Claude Code's leading status glyph (the idle ✳ / animated spinner) from the window name so the status bar does not repaint every animation frame. When false, the raw pane title is used verbatim."

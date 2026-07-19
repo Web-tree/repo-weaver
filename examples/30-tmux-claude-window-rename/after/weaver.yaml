@@ -1,0 +1,28 @@
+version: "1"
+modules:
+  - name: "tmux-claude"
+    source: "../module"
+    ref: "v1"
+apps:
+  - name: "dotfiles"
+    module: "tmux-claude"
+    # A dotfiles workspace: `home/` mirrors $HOME and is stowed/symlinked there.
+    # The real target is ~/.tmux.conf — managing the tracked copy keeps the
+    # change reviewable and testable instead of writing blindly into $HOME.
+    path: "home"
+    inputs:
+      set_titles: true
+      strip_status_glyph: true
+    ensures:
+      # Converge ONE marked region of an existing, hand-written tmux config.
+      # Unlike example 23's `ensure.file.md_section` (markdown, HTML-comment
+      # markers), a tmux config is plain text, so the markers must use tmux's
+      # own comment leader (`#`). That is what `selector.comment` selects.
+      - type: "ensure.text.section"
+        file: ".tmux.conf"
+        selector:
+          type: "block_marker"
+          id: "tmux-claude-rename"
+          comment: "#"
+        on_exists: "update"
+        content_from_template: "sections/tmux-claude-rename.conf.j2"

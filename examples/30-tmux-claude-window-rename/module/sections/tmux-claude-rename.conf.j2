@@ -1,0 +1,18 @@
+# Managed by repo-weaver — module: tmux-claude-window-rename.
+# Do NOT edit between the rw:section markers; `rw apply` overwrites this region.
+#
+# Make the tmux window name (#W, shown in the status bar) follow the terminal
+# title (#T) that the running program sets. Claude Code publishes its current
+# task / session name as the title via an OSC escape sequence; tmux records it
+# as the pane title but, by default, does not use it for the window name.
+{% if set_titles -%}
+set-option -g set-titles on
+{% endif -%}
+set-option -g automatic-rename on
+{% if strip_status_glyph -%}
+# Strip Claude's leading status glyph so the animated spinner doesn't churn the
+# status bar, and fall back to the running command for panes with no title.
+set-option -g automatic-rename-format '#{?#{==:#{pane_title},},#{pane_current_command},#{s/^[^ ]* //:pane_title}}'
+{%- else -%}
+set-option -g automatic-rename-format '#{pane_title}'
+{%- endif %}

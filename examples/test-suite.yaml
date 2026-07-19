@@ -48,3 +48,15 @@ examples:
     stage: pending
   23-ai-agents-skills-and-agents-md:
     stage: implemented
+  # Plain-text sibling of 23: `ensure.text.section` on a non-markdown file with a
+  # `#`-comment marker. Pending until the section primitive accepts a configurable
+  # comment leader. Flip to `implemented` once `before/` converges to `after/`.
+  30-tmux-claude-window-rename:
+    stage: pending
+    custom_assertions:
+      - type: file_contains
+        path: "home/.tmux.conf"
+        value: '#{s/^[^ ]* //:pane_title}'
+      - type: file_contains
+        path: "home/.tmux.conf"
+        value: 'rw:section id="tmux-claude-rename"'
